@@ -1,4 +1,4 @@
-Ecommerce Project Front End
+Ecommerce Project Front End - Team 1
 
 Team Members: \
 Sam Gupta \
