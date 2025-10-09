@@ -1,7 +1,7 @@
 import React from 'react';
 import './cart.css';
 
-export default function Cart({ items, onRemove }) {
+export default function Cart({ items, onRemove, onChangeQuantity }) {
   const total = items.reduce((s, it) => s + it.price * it.quantity, 0);
 
   return (
@@ -15,9 +15,13 @@ export default function Cart({ items, onRemove }) {
             <li key={it.id} className="cart-item">
               <div className="cart-item-info">
                 <span className="cart-name">{it.name}</span>
-                <span className="cart-qty">x{it.quantity}</span>
               </div>
               <div className="cart-item-actions">
+                <div className="qty-controls">
+                  <button className="qty-btn" onClick={() => onChangeQuantity(it.id, it.quantity - 1)}>-</button>
+                  <span className="cart-qty">{it.quantity}</span>
+                  <button className="qty-btn" onClick={() => onChangeQuantity(it.id, it.quantity + 1)}>+</button>
+                </div>
                 <span className="cart-price">${(it.price * it.quantity).toFixed(2)}</span>
                 <button className="btn-remove" onClick={() => onRemove(it.id)}>Remove</button>
               </div>

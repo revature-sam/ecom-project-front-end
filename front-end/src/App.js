@@ -27,6 +27,13 @@ function App() {
     setCart((cur) => cur.filter((c) => c.id !== productId));
   }
 
+  function handleChangeQuantity(productId, newQuantity) {
+    setCart((cur) => {
+      if (newQuantity <= 0) return cur.filter((c) => c.id !== productId);
+      return cur.map((c) => c.id === productId ? { ...c, quantity: newQuantity } : c);
+    });
+  }
+
   return (
     <div className="App app-grid">
       <main className="catalog">
@@ -42,7 +49,7 @@ function App() {
         </section>
       </main>
 
-      <Cart items={cart} onRemove={handleRemove} />
+      <Cart items={cart} onRemove={handleRemove} onChangeQuantity={handleChangeQuantity} />
     </div>
   );
 }
