@@ -1,11 +1,11 @@
 import React from 'react';
 import './cart.css';
 
-export default function Cart({ items, onRemove, onChangeQuantity }) {
+export default function Cart({ items, onRemove, onChangeQuantity, className }) {
   const total = items.reduce((s, it) => s + it.price * it.quantity, 0);
 
   return (
-    <aside className="cart">
+    <aside className={`cart ${className || ''}`}>
       <h2>Cart</h2>
       {items.length === 0 ? (
         <p className="empty">Your cart is empty</p>

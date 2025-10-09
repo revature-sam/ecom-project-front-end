@@ -1,7 +1,7 @@
 import React from 'react';
 import './navbar.css';
 
-export default function Navbar({ query, onChange, cartCount }) {
+export default function Navbar({ query, onChange, cartCount, onToggle, bump }) {
   return (
     <nav className="navbar">
       <div className="brand">E-commerce</div>
@@ -13,7 +13,10 @@ export default function Navbar({ query, onChange, cartCount }) {
         />
       </div>
       <div className="nav-actions">
-        <div className="cart-bubble">Cart ({cartCount})</div>
+        <button className="cart-button" onClick={onToggle} aria-label={`Open cart with ${cartCount} items`}>
+          <span className={`badge ${bump ? 'bump' : ''}`}>{cartCount}</span>
+          <span className="cart-text">Cart</span>
+        </button>
       </div>
     </nav>
   );

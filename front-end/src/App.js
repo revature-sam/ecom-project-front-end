@@ -14,14 +14,27 @@ const sampleProducts = [
 function App() {
   const [cart, setCart] = useState([]);
   const [query, setQuery] = useState('');
+  const [cartOpen, setCartOpen] = useState(false);
+  const [bump, setBump] = useState(false);
 
   function handleAdd(product) {
     setCart((cur) => {
+      const prevCount = cur.reduce((s, c) => s + c.quantity, 0);
       const exists = cur.find((c) => c.id === product.id);
+      let next;
       if (exists) {
-        return cur.map((c) => c.id === product.id ? { ...c, quantity: c.quantity + 1 } : c);
+        next = cur.map((c) => c.id === product.id ? { ...c, quantity: c.quantity + 1 } : c);
+      } else {
+        next = [...cur, { ...product, quantity: 1 }];
       }
-      return [...cur, { ...product, quantity: 1 }];
+
+      const nextCount = next.reduce((s, c) => s + c.quantity, 0);
+      if (nextCount > prevCount) {
+        setBump(true);
+        window.setTimeout(() => setBump(false), 380);
+      }
+
+      return next;
     });
   }
 
@@ -38,7 +51,13 @@ function App() {
 
   return (
     <div className="App">
-      <Navbar query={query} onChange={setQuery} cartCount={cart.reduce((s, c) => s + c.quantity, 0)} />
+      <Navbar
+        query={query}
+        onChange={setQuery}
+        cartCount={cart.reduce((s, c) => s + c.quantity, 0)}
+        onToggle={() => setCartOpen((v) => !v)}
+        bump={bump}
+      />
       <div className="app-grid">
       <main className="catalog">
         <header className="catalog-header">
@@ -55,7 +74,8 @@ function App() {
         </section>
       </main>
 
-      <Cart items={cart} onRemove={handleRemove} onChangeQuantity={handleChangeQuantity} />
+      <Cart items={cart} onRemove={handleRemove} onChangeQuantity={handleChangeQuantity} className={cartOpen ? 'open' : ''} />
+      <div className={`overlay ${cartOpen ? 'open' : ''}`} onClick={() => setCartOpen(false)} />
       </div>
     </div>
   );

@@ -9,8 +9,41 @@
 .brand { font-weight:700; font-size:1.1rem }
 .search input { padding:8px 10px; border-radius:8px; border:1px solid #cbd5e1; width:300px }
 .nav-actions { display:flex; gap:12px; align-items:center }
-.cart-bubble { background:#edf2ff; padding:6px 10px; border-radius:20px; color:#2b6cb0 }
+.cart-button { background:#f1f5f9; color:#1a202c; padding:6px 10px; border-radius:8px; border:none; cursor:pointer; display:flex; align-items:center; gap:8px }
+.cart-button:hover { background:#e2e8f0 }
+.cart-bubble { background:transparent; padding:0; }
+.cart-text { font-weight:700; font-size:1.05rem }
+
+.overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.35); opacity:0; pointer-events:none; transition:opacity .2s ease;
+}
+.overlay.open { opacity:1; pointer-events:auto }
+
+/* bump animation for badge */
+.badge {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:#2563eb; /* blue badge */
+  color:#fff;
+  font-weight:700;
+  margin-right:4px;
+}
+.badge.bump {
+  animation: badge-bump 360ms cubic-bezier(.2,.8,.2,1);
+}
+@keyframes badge-bump {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.18); }
+  50% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
 
 @media (max-width:600px) {
   .search input { width:140px }
 }
+
+.cart-label { vertical-align: middle; font-weight: 700 }
