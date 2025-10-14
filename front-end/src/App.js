@@ -3,12 +3,19 @@ import './App.css';
 import ProductCard from './components/ProductCard';
 import Cart from './components/Cart';
 import Navbar from './components/Navbar';
+import FilterBar from './components/FilterBar';
 
 const sampleProducts = [
-  { id: 'p1', name: 'Blue Sneakers', price: 59.99, image: 'https://via.placeholder.com/400x300?text=Sneakers' },
-  { id: 'p2', name: 'Classic Watch', price: 129.99, image: 'https://via.placeholder.com/400x300?text=Watch' },
-  { id: 'p3', name: 'Leather Jacket', price: 199.0, image: 'https://via.placeholder.com/400x300?text=Jacket' },
-  { id: 'p4', name: 'Sunglasses', price: 39.5, image: 'https://via.placeholder.com/400x300?text=Sunglasses' },
+  { id: 't1', name: 'Aurora Smartphone', category: 'Phones', price: 799.99, image: 'https://via.placeholder.com/400x300?text=Aurora+Phone' },
+  { id: 't2', name: 'Nebula Laptop Pro', category: 'Laptops', price: 1299.0, image: 'https://via.placeholder.com/400x300?text=Nebula+Laptop' },
+  { id: 't3', name: 'Quantum Earbuds', category: 'Audio', price: 149.99, image: 'https://via.placeholder.com/400x300?text=Quantum+Earbuds' },
+  { id: 't4', name: 'Photon Charger', category: 'Accessories', price: 29.99, image: 'https://via.placeholder.com/400x300?text=Photon+Charger' },
+  { id: 't5', name: 'Horizon Tablet', category: 'Laptops', price: 599.99, image: 'https://via.placeholder.com/400x300?text=Horizon+Tablet' },
+  { id: 't6', name: 'Voyager Smartwatch', category: 'Accessories', price: 199.0, image: 'https://via.placeholder.com/400x300?text=Voyager+Watch' },
+  { id: 't7', name: 'Echo Studio Speaker', category: 'Audio', price: 249.5, image: 'https://via.placeholder.com/400x300?text=Echo+Speaker' },
+  { id: 't8', name: 'Pulse Gaming Phone', category: 'Phones', price: 999.99, image: 'https://via.placeholder.com/400x300?text=Pulse+Phone' },
+  { id: 't9', name: 'Atlas Mechanical Keyboard', category: 'Accessories', price: 119.99, image: 'https://via.placeholder.com/400x300?text=Atlas+Keyboard' },
+  { id: 't10', name: 'Nimbus Ultrabook', category: 'Laptops', price: 1499.99, image: 'https://via.placeholder.com/400x300?text=Nimbus+Ultrabook' },
 ];
 
 function App() {
@@ -16,6 +23,7 @@ function App() {
   const [query, setQuery] = useState('');
   const [cartOpen, setCartOpen] = useState(false);
   const [bump, setBump] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   function handleAdd(product) {
     setCart((cur) => {
@@ -65,8 +73,15 @@ function App() {
           <p className="lead">Browse placeholder items and add them to your cart.</p>
         </header>
 
+        <FilterBar
+          categories={[ 'All', 'Phones', 'Laptops', 'Accessories', 'Audio' ]}
+          selected={selectedCategory}
+          onSelect={setSelectedCategory}
+        />
+
         <section className="products">
           {sampleProducts
+            .filter((p) => selectedCategory === 'All' || p.category === selectedCategory)
             .filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()))
             .map((p) => (
               <ProductCard key={p.id} product={p} onAdd={handleAdd} />
