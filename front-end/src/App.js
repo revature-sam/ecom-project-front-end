@@ -24,6 +24,16 @@ function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [bump, setBump] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const suggestions = query.trim().length > 0
+    ? (() => {
+        const q = query.trim().toLowerCase();
+        const seen = new Set();
+        return sampleProducts
+          .filter((p) => p.name.toLowerCase().includes(q) && !seen.has(p.name) && (seen.add(p.name), true))
+          .slice(0, 6)
+          .map((p) => ({ name: p.name, image: p.image }));
+      })()
+    : [];
 
   function handleAdd(product) {
     setCart((cur) => {
@@ -62,6 +72,8 @@ function App() {
       <Navbar
         query={query}
         onChange={setQuery}
+        suggestions={suggestions}
+        onSelectSuggestion={(s) => setQuery(s)}
         cartCount={cart.reduce((s, c) => s + c.quantity, 0)}
         onToggle={() => setCartOpen((v) => !v)}
         bump={bump}
