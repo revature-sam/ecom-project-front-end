@@ -1,7 +1,7 @@
 import React from 'react';
 import './cart.css';
 
-export default function Cart({ items, onRemove, onChangeQuantity, className }) {
+export default function Cart({ items, onRemove, onChangeQuantity, className, onCheckout }) {
   const total = items.reduce((s, it) => s + it.price * it.quantity, 0);
 
   return (
@@ -14,7 +14,7 @@ export default function Cart({ items, onRemove, onChangeQuantity, className }) {
           {items.map((it) => (
             <li key={it.id} className="cart-item">
               <div className="cart-item-info">
-                <span className="cart-name">{it.name}</span>
+                <span className="cart-name" title={it.name}>{it.name}</span>
               </div>
               <div className="cart-item-actions">
                 <div className="qty-controls">
@@ -33,6 +33,18 @@ export default function Cart({ items, onRemove, onChangeQuantity, className }) {
       <div className="cart-total">
         <strong>Total:</strong>
         <span>${total.toFixed(2)}</span>
+      </div>
+      <div className="cart-actions">
+        <button
+          className="checkout-btn"
+          disabled={items.length === 0}
+          onClick={() => {
+            if (onCheckout) onCheckout(items, total);
+            else console.log('Checkout clicked', { items, total });
+          }}
+        >
+          Proceed to Checkout
+        </button>
       </div>
     </aside>
   );

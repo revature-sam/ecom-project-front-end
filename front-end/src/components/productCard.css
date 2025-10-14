@@ -23,11 +23,14 @@
 .product-price { color: #2d3748; font-weight: 600; }
 .btn-add {
   margin-top: auto;
-  padding: 8px 10px;
-  background: #2563eb;
+  padding: 10px 12px;
+  background: linear-gradient(180deg,#2563eb,#1e40af);
   color: #fff;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(37,99,235,0.12);
 }
-.btn-add:hover { opacity: 0.95 }
+.btn-add:hover { opacity: 0.98 }
+.btn-add:active { transform: translateY(1px) }
