@@ -1,0 +1,96 @@
+.filter-sidebar {
+  @apply w-72 bg-dark-800 rounded-lg p-5 shadow-lg h-fit sticky top-5;
+}
+
+.filter-header {
+  @apply flex items-center justify-between mb-6 pb-4 border-b border-dark-600;
+}
+
+.filter-header h3 {
+  @apply text-lg font-semibold text-gray-100 m-0;
+}
+
+.reset-btn {
+  @apply bg-transparent border border-primary-600 text-primary-400 py-1.5 px-3 rounded-md cursor-pointer hover:bg-primary-600 hover:text-white transition-colors text-sm font-medium;
+}
+
+.filter-section {
+  @apply mb-6;
+}
+
+.filter-section h4 {
+  @apply text-base font-medium text-gray-200 mb-3 mt-0;
+}
+
+/* Category Filters */
+.category-buttons {
+  @apply flex flex-col gap-2;
+}
+
+.category-btn {
+  @apply w-full py-2.5 px-3 rounded-md border border-dark-600 bg-dark-700 text-gray-300 cursor-pointer hover:bg-dark-600 hover:text-gray-100 transition-colors text-sm font-medium text-left;
+}
+
+.category-btn.active {
+  @apply bg-primary-600 border-primary-600 text-white hover:bg-primary-700;
+}
+
+/* Price Range */
+.price-slider-container {
+  @apply mb-4;
+}
+
+.price-slider {
+  @apply w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer mb-3;
+}
+
+.price-slider::-webkit-slider-thumb {
+  @apply appearance-none w-5 h-5 bg-primary-600 rounded-full cursor-pointer;
+}
+
+.price-slider::-moz-range-thumb {
+  @apply w-5 h-5 bg-primary-600 rounded-full cursor-pointer border-none;
+}
+
+/* Price Range */
+.price-inputs {
+  @apply flex flex-col gap-3;
+}
+
+.price-input-group {
+  @apply flex flex-col gap-1;
+}
+
+.price-input-group label {
+  @apply text-xs text-gray-400 font-medium;
+}
+
+.price-input-group input {
+  @apply p-2 rounded-md border border-dark-600 bg-dark-700 text-gray-100 placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500;
+}
+
+.price-range-display {
+  @apply mt-2 text-sm text-primary-400 font-medium text-center;
+}
+
+/* Sort Select */
+.sort-select {
+  @apply w-full p-2 rounded-md border border-dark-600 bg-dark-700 text-gray-100 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500;
+}
+
+.sort-select option {
+  @apply bg-dark-700 text-gray-100;
+}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+  .filter-sidebar {
+    @apply w-64;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-sidebar {
+    @apply w-full mb-5 static;
+  }
+}

@@ -36,7 +36,7 @@
 }
 
 .catalog { 
-  @apply flex-1 p-5 max-w-5xl mx-auto;
+  @apply flex-1 p-5 max-w-7xl mx-auto;
 }
 
 .catalog-header { 
@@ -47,8 +47,24 @@
   @apply text-gray-400;
 }
 
+.catalog-content {
+  @apply flex gap-6 items-start;
+}
+
 .products { 
-  @apply flex gap-4 flex-wrap justify-center;
+  @apply flex gap-4 flex-wrap justify-start flex-1;
+}
+
+.no-products {
+  @apply text-center py-12 px-6 bg-dark-800 rounded-lg shadow-lg flex-1;
+}
+
+.no-products h3 {
+  @apply text-xl font-semibold text-gray-200 mb-2 mt-0;
+}
+
+.no-products p {
+  @apply text-gray-400 m-0;
 }
 
 /* Full width layout for checkout page */
@@ -63,5 +79,16 @@
   }
   .cart { 
     @apply w-full;
+  }
+}
+
+/* Responsive for catalog with sidebar */
+@media (max-width: 768px) {
+  .catalog-content {
+    @apply flex-col;
+  }
+  
+  .products {
+    @apply justify-center;
   }
 }

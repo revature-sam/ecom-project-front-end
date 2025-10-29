@@ -30,6 +30,8 @@ function AppContent() {
   const [bump, setBump] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [user, setUser] = useState(null);
+  const [priceRange, setPriceRange] = useState([0, 1500]);
+  const [sortBy, setSortBy] = useState('name');
   
   const isHomePage = location.pathname === '/';
   
@@ -179,6 +181,10 @@ function AppContent() {
                 query={query}
                 selectedCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
+                priceRange={priceRange}
+                onPriceRangeChange={setPriceRange}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
               />
             } 
           />
