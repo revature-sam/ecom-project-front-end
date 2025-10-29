@@ -1,6 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './navbar.css';
-export default function Navbar({ query, onChange, suggestions = [], onSelectSuggestion, cartCount, onToggle, bump }) {
+
+export default function Navbar({ 
+  query, 
+  onChange, 
+  suggestions = [], 
+  onSelectSuggestion, 
+  cartCount, 
+  onToggle, 
+  bump, 
+  user, 
+  isHomePage 
+}) {
+  const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef(null);
 
@@ -56,10 +69,23 @@ export default function Navbar({ query, onChange, suggestions = [], onSelectSugg
         )}
       </div>
       <div className="nav-actions">
-        <button className="cart-button" onClick={onToggle} aria-label={`Open cart with ${cartCount} items`}>
-          <span className={`badge ${bump ? 'bump' : ''}`}>{cartCount}</span>
-          <span className="cart-text">Cart</span>
-        </button>
+        {user ? (
+          <button className="account-button" onClick={() => navigate('/account')}>
+            <span className="user-name">{user.firstName}</span>
+            <span className="account-text">My Account</span>
+          </button>
+        ) : (
+          <button className="login-button" onClick={() => navigate('/login')}>
+            Sign In
+          </button>
+        )}
+        
+        {isHomePage && (
+          <button className="cart-button" onClick={onToggle} aria-label={`Open cart with ${cartCount} items`}>
+            <span className={`badge ${bump ? 'bump' : ''}`}>{cartCount}</span>
+            <span className="cart-text">Cart</span>
+          </button>
+        )}
       </div>
     </nav>
   );

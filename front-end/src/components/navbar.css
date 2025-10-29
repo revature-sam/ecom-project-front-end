@@ -44,6 +44,50 @@
 .suggestion-img { width:38px; height:28px; object-fit:cover; border-radius:6px; flex-shrink:0 }
 .suggestion-text { text-align: left; display:block; }
 .nav-actions { display:flex; gap:12px; align-items:center }
+
+.login-button {
+  background: #3b82f6;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.login-button:hover {
+  background: #2563eb;
+}
+
+.account-button {
+  background: #f1f5f9;
+  color: #1a202c;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.account-button:hover {
+  background: #e2e8f0;
+}
+
+.user-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.account-text {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
 .cart-button { background:#f1f5f9; color:#1a202c; padding:6px 10px; border-radius:8px; border:none; cursor:pointer; display:flex; align-items:center; gap:8px }
 .cart-button:hover { background:#e2e8f0 }
 .cart-bubble { background:transparent; padding:0; }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './checkout.css';
 
-export default function Checkout({ cart, onUpdateCart }) {
+export default function Checkout({ cart, onUpdateCart, onPlaceOrder }) {
   const navigate = useNavigate();
   const [discountCode, setDiscountCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(null);
@@ -53,9 +53,21 @@ export default function Checkout({ cart, onUpdateCart }) {
   }
 
   function handlePlaceOrder() {
+    const orderData = {
+      items: cart,
+      total: total,
+      subtotal: subtotal,
+      discountAmount: discountAmount,
+      tax: tax,
+      shipping: shipping
+    };
+    
+    // Call the parent's order handler if provided
+    if (onPlaceOrder) {
+      onPlaceOrder(orderData);
+    }
+    
     alert(`Order placed! Total: $${total.toFixed(2)}`);
-    // In a real app, this would process the payment and clear the cart
-    onUpdateCart([]);
     navigate('/');
   }
 

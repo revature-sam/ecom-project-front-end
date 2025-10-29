@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
 import Home from './components/Home';
 import Checkout from './components/Checkout';
+import Login from './components/Login';
+import Account from './components/Account';
 import Cart from './components/Cart';
 import Navbar from './components/Navbar';
 
@@ -27,8 +29,42 @@ function AppContent() {
   const [cartOpen, setCartOpen] = useState(false);
   const [bump, setBump] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [user, setUser] = useState(null);
   
   const isHomePage = location.pathname === '/';
+  
+  // Load user from localStorage on app start
+  useEffect(() => {
+    // Create demo user if no users exist
+    const existingUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+    if (existingUsers.length === 0) {
+      const demoUser = {
+        id: 1,
+        email: 'demo@example.com',
+        firstName: 'Demo',
+        lastName: 'User',
+        password: 'demo123',
+        orders: [
+          {
+            id: 1001,
+            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+            items: [
+              { id: 't1', name: 'Aurora Smartphone', price: 799.99, quantity: 1, image: 'https://via.placeholder.com/400x300?text=Aurora+Phone' },
+              { id: 't3', name: 'Quantum Earbuds', price: 149.99, quantity: 2, image: 'https://via.placeholder.com/400x300?text=Quantum+Earbuds' }
+            ],
+            total: 1099.97,
+            status: 'Delivered'
+          }
+        ]
+      };
+      localStorage.setItem('mockUsers', JSON.stringify([demoUser]));
+    }
+    
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
   
   const suggestions = query.trim().length > 0
     ? (() => {
@@ -78,6 +114,47 @@ function AppContent() {
     navigate('/checkout');
   }
 
+  function handleLogin(userData) {
+    setUser(userData);
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+  }
+
+  function handleLogout() {
+    setUser(null);
+    localStorage.removeItem('currentUser');
+  }
+
+  function handlePlaceOrder(orderData) {
+    if (user) {
+      // Add order to user's order history
+      const mockUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+      const userIndex = mockUsers.findIndex(u => u.id === user.id);
+      
+      if (userIndex !== -1) {
+        const newOrder = {
+          id: Date.now(),
+          date: new Date().toISOString(),
+          items: orderData.items,
+          total: orderData.total,
+          status: 'Delivered'
+        };
+        
+        mockUsers[userIndex].orders = mockUsers[userIndex].orders || [];
+        mockUsers[userIndex].orders.unshift(newOrder);
+        
+        localStorage.setItem('mockUsers', JSON.stringify(mockUsers));
+        
+        // Update current user session
+        const updatedUser = { ...user, orders: mockUsers[userIndex].orders };
+        setUser(updatedUser);
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      }
+    }
+    
+    // Clear cart after order
+    setCart([]);
+  }
+
   return (
     <div className="App">
       <Navbar
@@ -88,6 +165,8 @@ function AppContent() {
         cartCount={cart.reduce((s, c) => s + c.quantity, 0)}
         onToggle={() => setCartOpen((v) => !v)}
         bump={bump}
+        user={user}
+        isHomePage={isHomePage}
       />
       <div className={isHomePage ? "app-grid" : ""}>
         <Routes>
@@ -109,7 +188,24 @@ function AppContent() {
               <Checkout
                 cart={cart}
                 onUpdateCart={setCart}
+                onPlaceOrder={handlePlaceOrder}
               />
+            } 
+          />
+          <Route 
+            path="/login" 
+            element={
+              <Login onLogin={handleLogin} />
+            } 
+          />
+          <Route 
+            path="/account" 
+            element={
+              user ? (
+                <Account user={user} onLogout={handleLogout} />
+              ) : (
+                <Login onLogin={handleLogin} />
+              )
             } 
           />
         </Routes>
