@@ -25,6 +25,7 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const [cart, setCart] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
   const [query, setQuery] = useState('');
   const [cartOpen, setCartOpen] = useState(false);
   const [bump, setBump] = useState(false);
@@ -115,6 +116,17 @@ function AppContent() {
     setCart([]);
   }
 
+  function handleToggleWishlist(product) {
+    setWishlist((current) => {
+      const isInWishlist = current.some(item => item.id === product.id);
+      if (isInWishlist) {
+        return current.filter(item => item.id !== product.id);
+      } else {
+        return [...current, product];
+      }
+    });
+  }
+
   function handleCheckout() {
     setCartOpen(false);
     navigate('/checkout');
@@ -189,6 +201,8 @@ function AppContent() {
                 onPriceRangeChange={setPriceRange}
                 sortBy={sortBy}
                 onSortChange={setSortBy}
+                wishlist={wishlist}
+                onToggleWishlist={handleToggleWishlist}
               />
             } 
           />

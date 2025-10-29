@@ -11,7 +11,9 @@ export default function Home({
   priceRange,
   onPriceRangeChange,
   sortBy,
-  onSortChange
+  onSortChange,
+  wishlist,
+  onToggleWishlist
 }) {
   // Apply all filters
   let filteredProducts = products
@@ -51,7 +53,13 @@ export default function Home({
         <section className="products">
           {filteredProducts.length > 0 ? (
             filteredProducts.map((p) => (
-              <ProductCard key={p.id} product={p} onAdd={onAddToCart} />
+              <ProductCard 
+                key={p.id} 
+                product={p} 
+                onAdd={onAddToCart}
+                onToggleWishlist={onToggleWishlist}
+                isInWishlist={wishlist.some(item => item.id === p.id)}
+              />
             ))
           ) : (
             <div className="no-products">
