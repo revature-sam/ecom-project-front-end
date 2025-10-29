@@ -1,12 +1,27 @@
 import React from 'react';
 import './cart.css';
 
-export default function Cart({ items, onRemove, onChangeQuantity, className, onCheckout }) {
+export default function Cart({ items, onRemove, onChangeQuantity, className, onCheckout, onClearCart }) {
   const total = items.reduce((s, it) => s + it.price * it.quantity, 0);
+
+  const handleClearCart = () => {
+    if (window.confirm('Are you sure you want to clear your cart?')) {
+      onClearCart();
+    }
+  };
 
   return (
     <aside className={`cart ${className || ''}`}>
-      <h2>Cart</h2>
+      <div className="cart-header">
+        <h2 className="cart-title">Cart</h2>
+        <button 
+          className={`clear-cart-btn ${items.length === 0 ? 'disabled' : ''}`}
+          onClick={handleClearCart}
+          disabled={items.length === 0}
+        >
+          Clear Cart
+        </button>
+      </div>
       {items.length === 0 ? (
         <p className="empty">Your cart is empty</p>
       ) : (

@@ -111,6 +111,10 @@ function AppContent() {
     });
   }
 
+  function handleClearCart() {
+    setCart([]);
+  }
+
   function handleCheckout() {
     setCartOpen(false);
     navigate('/checkout');
@@ -223,6 +227,7 @@ function AppContent() {
               onRemove={handleRemove} 
               onChangeQuantity={handleChangeQuantity} 
               onCheckout={handleCheckout}
+              onClearCart={handleClearCart}
               className={cartOpen ? 'open' : ''} 
             />
             <div className={`overlay ${cartOpen ? 'open' : ''}`} onClick={() => setCartOpen(false)} />
