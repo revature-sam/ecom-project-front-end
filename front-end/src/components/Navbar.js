@@ -161,8 +161,8 @@ export default function Navbar({
         
         {isHomePage && (
           <button className="cart-button" onClick={onToggle} aria-label={`Open cart with ${cartCount} items`}>
-            <span className={`badge ${bump ? 'bump' : ''}`}>{cartCount}</span>
             <span className="cart-text">Cart</span>
+            <span className={`badge ${bump ? 'bump' : ''}`}>{cartCount}</span>
           </button>
         )}
       </div>
