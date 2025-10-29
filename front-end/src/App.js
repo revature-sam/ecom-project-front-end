@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
-import ProductCard from './components/ProductCard';
+import Home from './components/Home';
+import Checkout from './components/Checkout';
 import Cart from './components/Cart';
 import Navbar from './components/Navbar';
-import FilterBar from './components/FilterBar';
 
 const sampleProducts = [
   { id: 't1', name: 'Aurora Smartphone', category: 'Phones', price: 799.99, image: 'https://via.placeholder.com/400x300?text=Aurora+Phone' },
@@ -18,12 +19,17 @@ const sampleProducts = [
   { id: 't10', name: 'Nimbus Ultrabook', category: 'Laptops', price: 1499.99, image: 'https://via.placeholder.com/400x300?text=Nimbus+Ultrabook' },
 ];
 
-function App() {
+function AppContent() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [cart, setCart] = useState([]);
   const [query, setQuery] = useState('');
   const [cartOpen, setCartOpen] = useState(false);
   const [bump, setBump] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  
+  const isHomePage = location.pathname === '/';
+  
   const suggestions = query.trim().length > 0
     ? (() => {
         const q = query.trim().toLowerCase();
@@ -67,6 +73,11 @@ function App() {
     });
   }
 
+  function handleCheckout() {
+    setCartOpen(false);
+    navigate('/checkout');
+  }
+
   return (
     <div className="App">
       <Navbar
@@ -78,34 +89,52 @@ function App() {
         onToggle={() => setCartOpen((v) => !v)}
         bump={bump}
       />
-      <div className="app-grid">
-      <main className="catalog">
-        <header className="catalog-header">
-          <h1>E-commerce App</h1>
-          <p className="lead">Browse placeholder items and add them to your cart.</p>
-        </header>
+      <div className={isHomePage ? "app-grid" : ""}>
+        <Routes>
+          <Route 
+            path="/" 
+            element={
+              <Home
+                products={sampleProducts}
+                onAddToCart={handleAdd}
+                query={query}
+                selectedCategory={selectedCategory}
+                onSelectCategory={setSelectedCategory}
+              />
+            } 
+          />
+          <Route 
+            path="/checkout" 
+            element={
+              <Checkout
+                cart={cart}
+                onUpdateCart={setCart}
+              />
+            } 
+          />
+        </Routes>
 
-        <FilterBar
-          categories={[ 'All', 'Phones', 'Laptops', 'Accessories', 'Audio' ]}
-          selected={selectedCategory}
-          onSelect={setSelectedCategory}
-        />
-
-        <section className="products">
-          {sampleProducts
-            .filter((p) => selectedCategory === 'All' || p.category === selectedCategory)
-            .filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()))
-            .map((p) => (
-              <ProductCard key={p.id} product={p} onAdd={handleAdd} />
-            ))}
-        </section>
-      </main>
-
-      <Cart items={cart} onRemove={handleRemove} onChangeQuantity={handleChangeQuantity} className={cartOpen ? 'open' : ''} />
-      <div className={`overlay ${cartOpen ? 'open' : ''}`} onClick={() => setCartOpen(false)} />
+        {isHomePage && (
+          <>
+            <Cart 
+              items={cart} 
+              onRemove={handleRemove} 
+              onChangeQuantity={handleChangeQuantity} 
+              onCheckout={handleCheckout}
+              className={cartOpen ? 'open' : ''} 
+            />
+            <div className={`overlay ${cartOpen ? 'open' : ''}`} onClick={() => setCartOpen(false)} />
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}
