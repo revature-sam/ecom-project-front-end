@@ -1,5 +1,5 @@
 .App {
-  text-align: center;
+  @apply text-center bg-gradient-to-br from-dark-900 via-dark-800 to-primary-900 min-h-screen;
 }
 
 .App-logo {
@@ -14,13 +14,11 @@
 }
 
 .App-header {
-  background-color: #f7fafc;
-  min-height: 100vh;
-  color: #1a202c;
+  @apply bg-dark-800 min-h-screen text-gray-100;
 }
 
 .App-link {
-  color: #61dafb;
+  @apply text-primary-400 hover:text-primary-300;
 }
 
 @keyframes App-logo-spin {
@@ -34,46 +32,36 @@
 
 /* New layout for catalog + cart */
 .app-grid { 
-  display: flex; 
-  gap: 0; 
-  align-items: flex-start;
-  position: relative;
+  @apply flex gap-0 items-start relative;
 }
 
 .catalog { 
-  flex: 1; 
-  padding: 20px; 
-  max-width: 1100px; 
-  margin: 0 auto; 
+  @apply flex-1 p-5 max-w-5xl mx-auto;
 }
 
 .catalog-header { 
-  text-align: left; 
-  margin-bottom: 12px;
+  @apply text-left mb-3;
 }
 
 .lead { 
-  color: #4a5568;
+  @apply text-gray-400;
 }
 
 .products { 
-  display: flex; 
-  gap: 16px; 
-  flex-wrap: wrap; 
-  justify-content: center; 
+  @apply flex gap-4 flex-wrap justify-center;
 }
 
 /* Full width layout for checkout page */
 .app-grid:has(main:not(.catalog)) {
-  display: block;
+  @apply block;
 }
 
 /* small responsive tweaks */
 @media (max-width: 900px) {
   .app-grid { 
-    flex-direction: column;
+    @apply flex-col;
   }
   .cart { 
-    width: 100%;
+    @apply w-full;
   }
 }

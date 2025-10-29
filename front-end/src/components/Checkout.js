@@ -92,32 +92,30 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder }) {
                     <h3 className="item-name">{item.name}</h3>
                     <p className="item-price">${item.price.toFixed(2)}</p>
                   </div>
-                  <div className="item-controls">
-                    <div className="quantity-controls">
-                      <button 
-                        className="qty-btn"
-                        onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                      >
-                        -
-                      </button>
-                      <span className="quantity">{item.quantity}</span>
-                      <button 
-                        className="qty-btn"
-                        onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                      >
-                        +
-                      </button>
-                    </div>
+                  <div className="quantity-controls">
                     <button 
-                      className="remove-btn"
-                      onClick={() => handleRemoveItem(item.id)}
+                      className="qty-btn"
+                      onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                     >
-                      Remove
+                      -
+                    </button>
+                    <span className="quantity">{item.quantity}</span>
+                    <button 
+                      className="qty-btn"
+                      onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                    >
+                      +
                     </button>
                   </div>
                   <div className="item-total">
                     ${(item.price * item.quantity).toFixed(2)}
                   </div>
+                  <button 
+                    className="remove-btn"
+                    onClick={() => handleRemoveItem(item.id)}
+                  >
+                    Remove
+                  </button>
                 </div>
               ))}
             </div>

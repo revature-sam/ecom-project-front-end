@@ -1,53 +1,25 @@
 .account-page {
-  min-height: 100vh;
-  background: #f5f5f5;
-  padding: 20px 0;
+  @apply min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-primary-900 py-5;
 }
 
 .account-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0 20px;
+  @apply max-w-4xl mx-auto px-5;
 }
 
 .account-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 30px;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  @apply flex items-center justify-between mb-7 p-5 bg-dark-800 rounded-lg shadow-lg;
 }
 
 .back-btn {
-  background: #f1f5f9;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  color: #1a202c;
-  font-weight: 500;
-}
-
-.back-btn:hover {
-  background: #e2e8f0;
+  @apply bg-dark-700 border-none py-2 px-4 rounded-md cursor-pointer text-gray-100 font-medium hover:bg-dark-600 transition-colors;
 }
 
 .account-header h1 {
-  margin: 0;
-  color: #1a202c;
-  font-size: 2rem;
-  flex: 1;
-  text-align: center;
+  @apply m-0 text-gray-100 text-3xl flex-1 text-center;
 }
 
 .logout-btn {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 8px 16px;
+  @apply bg-red-600 text-white border-none py-2 px-4;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
@@ -67,15 +39,15 @@
 .account-info h2,
 .order-history h2 {
   margin: 0 0 20px 0;
-  color: #1a202c;
+  color: #f3f4f6;
   font-size: 1.5rem;
 }
 
 .info-card {
-  background: white;
+  background: #1f2937;
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .info-item {
@@ -90,13 +62,13 @@
 
 .info-item label {
   font-weight: 600;
-  color: #6b7280;
+  color: #9ca3af;
   font-size: 0.9rem;
   margin-bottom: 4px;
 }
 
 .info-item span {
-  color: #1a202c;
+  color: #f3f4f6;
   font-size: 1rem;
 }
 
@@ -107,10 +79,10 @@
 }
 
 .order-card {
-  background: white;
+  background: #1f2937;
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .order-header {
@@ -119,18 +91,18 @@
   align-items: flex-start;
   margin-bottom: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #4b5563;
 }
 
 .order-info h3 {
   margin: 0 0 4px 0;
-  color: #1a202c;
+  color: #f3f4f6;
   font-size: 1.1rem;
 }
 
 .order-date {
   margin: 0;
-  color: #6b7280;
+  color: #9ca3af;
   font-size: 0.9rem;
 }
 
@@ -142,7 +114,7 @@
   display: block;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #1a202c;
+  color: #f3f4f6;
   margin-bottom: 4px;
 }
 
@@ -185,36 +157,36 @@
 
 .item-name {
   font-weight: 500;
-  color: #1a202c;
+  color: #f3f4f6;
 }
 
 .item-quantity {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: #9ca3af;
 }
 
 .item-price {
   font-weight: 600;
-  color: #1a202c;
+  color: #f3f4f6;
 }
 
 .no-orders {
-  background: white;
+  background: #1f2937;
   border-radius: 8px;
   padding: 60px 24px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   text-align: center;
 }
 
 .no-orders-content h3 {
   margin: 0 0 12px 0;
-  color: #1a202c;
+  color: #f3f4f6;
   font-size: 1.3rem;
 }
 
 .no-orders-content p {
   margin: 0 0 24px 0;
-  color: #6b7280;
+  color: #9ca3af;
 }
 
 .shop-btn {

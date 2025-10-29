@@ -126,6 +126,11 @@ export default function Login({ onLogin }) {
   return (
     <div className="login-page">
       <div className="login-container">
+        <div className="login-header">
+          <button className="back-btn" onClick={() => navigate('/')}>
+            ← Back to Shopping
+          </button>
+        </div>
         <div className="login-card">
           <h1>{isRegister ? 'Create Account' : 'Sign In'}</h1>
           
