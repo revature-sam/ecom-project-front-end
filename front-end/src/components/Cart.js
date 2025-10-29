@@ -19,7 +19,7 @@ export default function Cart({ items, onRemove, onChangeQuantity, className, onC
           onClick={handleClearCart}
           disabled={items.length === 0}
         >
-          Clear Cart
+          Clear
         </button>
       </div>
       {items.length === 0 ? (
