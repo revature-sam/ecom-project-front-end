@@ -1,5 +1,5 @@
 .checkout-page {
-  @apply min-h-screen bg-dark-900 py-5 flex justify-center items-start;
+  @apply min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-primary-900 py-5 flex justify-center items-start;
 }
 
 .checkout-container {
@@ -191,12 +191,12 @@
 }
 
 .apply-btn {
-  background: #059669;
+  background: #16a34a;
   color: white;
 }
 
 .apply-btn:hover {
-  background: #047857;
+  background: #15803d;
 }
 
 .remove-discount-btn {

@@ -53,7 +53,7 @@
 }
 
 .account-button {
-  @apply bg-dark-700 text-gray-100 py-1.5 px-3 rounded-lg border-none cursor-pointer flex flex-col items-center gap-0.5 hover:bg-dark-600 transition-colors h-10;
+  @apply bg-dark-700 text-gray-100 py-1.5 px-3 rounded-lg border-none cursor-pointer flex items-center justify-center hover:bg-dark-600 transition-colors h-10;
 }
 
 .user-name {
@@ -61,7 +61,7 @@
 }
 
 .account-text {
-  @apply text-xs font-medium;
+  @apply text-sm font-semibold;
 }
 
 .cart-button { 
@@ -84,6 +84,7 @@
 /* bump animation for badge */
 .badge {
   @apply inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary-600 text-white font-bold mr-1;
+  font-family: 'Poppins', sans-serif;
 }
 .badge.bump {
   animation: badge-bump 360ms cubic-bezier(.2,.8,.2,1);

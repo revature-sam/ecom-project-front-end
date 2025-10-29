@@ -151,7 +151,6 @@ export default function Navbar({
       <div className="nav-actions">
         {user ? (
           <button className="account-button" onClick={() => navigate('/account')}>
-            <span className="user-name">{user.firstName}</span>
             <span className="account-text">My Account</span>
           </button>
         ) : (

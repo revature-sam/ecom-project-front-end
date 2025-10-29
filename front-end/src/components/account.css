@@ -1,5 +1,5 @@
 .account-page {
-  @apply min-h-screen bg-dark-900 py-5;
+  @apply min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-primary-900 py-5;
 }
 
 .account-container {
@@ -39,15 +39,15 @@
 .account-info h2,
 .order-history h2 {
   margin: 0 0 20px 0;
-  color: #1a202c;
+  color: #f3f4f6;
   font-size: 1.5rem;
 }
 
 .info-card {
-  background: white;
+  background: #1f2937;
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .info-item {
@@ -62,13 +62,13 @@
 
 .info-item label {
   font-weight: 600;
-  color: #6b7280;
+  color: #9ca3af;
   font-size: 0.9rem;
   margin-bottom: 4px;
 }
 
 .info-item span {
-  color: #1a202c;
+  color: #f3f4f6;
   font-size: 1rem;
 }
 
@@ -79,10 +79,10 @@
 }
 
 .order-card {
-  background: white;
+  background: #1f2937;
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .order-header {
@@ -91,18 +91,18 @@
   align-items: flex-start;
   margin-bottom: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #4b5563;
 }
 
 .order-info h3 {
   margin: 0 0 4px 0;
-  color: #1a202c;
+  color: #f3f4f6;
   font-size: 1.1rem;
 }
 
 .order-date {
   margin: 0;
-  color: #6b7280;
+  color: #9ca3af;
   font-size: 0.9rem;
 }
 
@@ -114,7 +114,7 @@
   display: block;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #1a202c;
+  color: #f3f4f6;
   margin-bottom: 4px;
 }
 
@@ -157,36 +157,36 @@
 
 .item-name {
   font-weight: 500;
-  color: #1a202c;
+  color: #f3f4f6;
 }
 
 .item-quantity {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: #9ca3af;
 }
 
 .item-price {
   font-weight: 600;
-  color: #1a202c;
+  color: #f3f4f6;
 }
 
 .no-orders {
-  background: white;
+  background: #1f2937;
   border-radius: 8px;
   padding: 60px 24px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   text-align: center;
 }
 
 .no-orders-content h3 {
   margin: 0 0 12px 0;
-  color: #1a202c;
+  color: #f3f4f6;
   font-size: 1.3rem;
 }
 
 .no-orders-content p {
   margin: 0 0 24px 0;
-  color: #6b7280;
+  color: #9ca3af;
 }
 
 .shop-btn {

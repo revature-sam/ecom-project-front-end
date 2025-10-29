@@ -1,5 +1,5 @@
 .App {
-  @apply text-center bg-dark-900 min-h-screen;
+  @apply text-center bg-gradient-to-br from-dark-900 via-dark-800 to-primary-900 min-h-screen;
 }
 
 .App-logo {
