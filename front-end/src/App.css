@@ -32,15 +32,15 @@
 
 /* New layout for catalog + cart */
 .app-grid { 
-  @apply flex gap-0 items-start relative;
+  @apply flex gap-0 items-start relative justify-center;
 }
 
 .catalog { 
-  @apply flex-1 p-5 max-w-7xl mx-auto;
+  @apply flex-1 p-5 max-w-6xl mx-auto w-full;
 }
 
 .catalog-header { 
-  @apply text-left mb-3;
+  @apply text-center mb-6;
 }
 
 .lead { 
@@ -48,11 +48,11 @@
 }
 
 .catalog-content {
-  @apply flex gap-6 items-start;
+  @apply flex gap-6 items-start justify-center px-8;
 }
 
 .products { 
-  @apply flex gap-4 flex-wrap justify-start flex-1;
+  @apply flex gap-4 flex-wrap justify-start flex-1 max-w-4xl;
 }
 
 .no-products {
@@ -83,12 +83,30 @@
 }
 
 /* Responsive for catalog with sidebar */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .catalog-content {
-    @apply flex-col;
+    @apply gap-4 px-4;
   }
   
   .products {
-    @apply justify-center;
+    @apply gap-3;
+  }
+}
+
+@media (max-width: 768px) {
+  .catalog-content {
+    @apply flex-col items-center px-3;
+  }
+  
+  .products {
+    @apply justify-center w-full;
+  }
+  
+  .catalog {
+    @apply px-3;
+  }
+  
+  .catalog-header {
+    @apply mb-4;
   }
 }
