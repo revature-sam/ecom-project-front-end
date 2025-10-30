@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './productCard.css';
 
-export default function ProductCard({ product, onAdd, onToggleWishlist, isInWishlist }) {
+export default function ProductCard({ product, onAdd, onToggleWishlist, isInWishlist, user, showNotification }) {
   const [imageError, setImageError] = useState(false);
 
   const getPlaceholderIcon = (category) => {
@@ -26,6 +26,12 @@ export default function ProductCard({ product, onAdd, onToggleWishlist, isInWish
   const handleWishlistClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (!user) {
+      showNotification('Please sign in to add items to your wishlist', 'warning');
+      return;
+    }
+    
     onToggleWishlist(product);
   };
 
@@ -33,9 +39,15 @@ export default function ProductCard({ product, onAdd, onToggleWishlist, isInWish
     <div className="product-card">
       <div className="product-image-container">
         <button 
-          className={`wishlist-btn ${isInWishlist ? 'active' : ''}`}
+          className={`wishlist-btn ${isInWishlist ? 'active' : ''} ${!user ? 'disabled' : ''}`}
           onClick={handleWishlistClick}
-          title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+          title={
+            !user 
+              ? 'Sign in to add to wishlist' 
+              : isInWishlist 
+                ? 'Remove from wishlist' 
+                : 'Add to wishlist'
+          }
         >
           ★
         </button>

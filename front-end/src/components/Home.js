@@ -13,7 +13,9 @@ export default function Home({
   sortBy,
   onSortChange,
   wishlist,
-  onToggleWishlist
+  onToggleWishlist,
+  user,
+  showNotification
 }) {
   // Apply all filters
   let filteredProducts = products
@@ -59,6 +61,8 @@ export default function Home({
                 onAdd={onAddToCart}
                 onToggleWishlist={onToggleWishlist}
                 isInWishlist={wishlist.some(item => item.id === p.id)}
+                user={user}
+                showNotification={showNotification}
               />
             ))
           ) : (

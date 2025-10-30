@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './checkout.css';
 
-export default function Checkout({ cart, onUpdateCart, onPlaceOrder }) {
+export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotification }) {
   const navigate = useNavigate();
   const [discountCode, setDiscountCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(null);
@@ -67,7 +67,10 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder }) {
       onPlaceOrder(orderData);
     }
     
-    alert(`Order placed! Total: $${total.toFixed(2)}`);
+    if (showNotification) {
+      showNotification(`Order placed successfully! Total: $${total.toFixed(2)}`, 'success');
+    }
+    
     navigate('/');
   }
 

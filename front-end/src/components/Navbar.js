@@ -11,7 +11,8 @@ export default function Navbar({
   onToggle, 
   bump, 
   user, 
-  isHomePage
+  isHomePage,
+  currentPath
 }) {
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -150,16 +151,18 @@ export default function Navbar({
       )}
       <div className="nav-actions">
         {user ? (
-          <button className="account-button" onClick={() => navigate('/account')}>
-            <span className="account-text">My Account</span>
-          </button>
+          currentPath !== '/account' && (
+            <button className="account-button" onClick={() => navigate('/account')}>
+              <span className="account-text">My Account</span>
+            </button>
+          )
         ) : (
           <button className="login-button" onClick={() => navigate('/login')}>
             Sign In
           </button>
         )}
         
-        {isHomePage && (
+        {(isHomePage || currentPath === '/account') && (
           <button className="cart-button" onClick={onToggle} aria-label={`Open cart with ${cartCount} items`}>
             <span className="cart-text">Cart</span>
             <span className={`badge ${bump ? 'bump' : ''}`}>{cartCount}</span>
