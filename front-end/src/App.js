@@ -7,6 +7,7 @@ import Login from './components/Login';
 import Account from './components/Account';
 import Cart from './components/Cart';
 import Navbar from './components/Navbar';
+import Notification from './components/Notification';
 
 const sampleProducts = [
   { id: 't1', name: 'Aurora Smartphone', category: 'Phones', price: 799.99, image: 'https://via.placeholder.com/400x300?text=Aurora+Phone' },
@@ -25,6 +26,7 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const [cart, setCart] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
   const [query, setQuery] = useState('');
   const [cartOpen, setCartOpen] = useState(false);
   const [bump, setBump] = useState(false);
@@ -32,6 +34,7 @@ function AppContent() {
   const [user, setUser] = useState(null);
   const [priceRange, setPriceRange] = useState([0, 1500]);
   const [sortBy, setSortBy] = useState('name');
+  const [notification, setNotification] = useState({ message: '', type: 'info', isVisible: false });
   
   const isHomePage = location.pathname === '/';
   
@@ -115,6 +118,25 @@ function AppContent() {
     setCart([]);
   }
 
+  function handleToggleWishlist(product) {
+    setWishlist((current) => {
+      const isInWishlist = current.some(item => item.id === product.id);
+      if (isInWishlist) {
+        return current.filter(item => item.id !== product.id);
+      } else {
+        return [...current, product];
+      }
+    });
+  }
+
+  function showNotification(message, type = 'info') {
+    setNotification({ message, type, isVisible: true });
+  }
+
+  function hideNotification() {
+    setNotification(prev => ({ ...prev, isVisible: false }));
+  }
+
   function handleCheckout() {
     setCartOpen(false);
     navigate('/checkout');
@@ -173,6 +195,7 @@ function AppContent() {
         bump={bump}
         user={user}
         isHomePage={isHomePage}
+        currentPath={location.pathname}
       />
       <div className={isHomePage ? "app-grid" : ""}>
         <Routes>
@@ -189,6 +212,10 @@ function AppContent() {
                 onPriceRangeChange={setPriceRange}
                 sortBy={sortBy}
                 onSortChange={setSortBy}
+                wishlist={wishlist}
+                onToggleWishlist={handleToggleWishlist}
+                user={user}
+                showNotification={showNotification}
               />
             } 
           />
@@ -199,6 +226,7 @@ function AppContent() {
                 cart={cart}
                 onUpdateCart={setCart}
                 onPlaceOrder={handlePlaceOrder}
+                showNotification={showNotification}
               />
             } 
           />
@@ -212,7 +240,13 @@ function AppContent() {
             path="/account" 
             element={
               user ? (
-                <Account user={user} onLogout={handleLogout} />
+                <Account 
+                  user={user} 
+                  onLogout={handleLogout}
+                  wishlist={wishlist}
+                  onToggleWishlist={handleToggleWishlist}
+                  onAddToCart={handleAdd}
+                />
               ) : (
                 <Login onLogin={handleLogin} />
               )
@@ -233,6 +267,13 @@ function AppContent() {
             <div className={`overlay ${cartOpen ? 'open' : ''}`} onClick={() => setCartOpen(false)} />
           </>
         )}
+        
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          isVisible={notification.isVisible}
+          onClose={hideNotification}
+        />
       </div>
     </div>
   );

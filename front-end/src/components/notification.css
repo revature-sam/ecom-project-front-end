@@ -1,0 +1,58 @@
+.notification {
+  @apply fixed top-20 right-4 z-50 max-w-sm w-full rounded-lg overflow-hidden;
+  animation: slideInRight 0.3s ease-out;
+}
+
+.notification.info {
+  @apply bg-blue-600 text-white;
+}
+
+.notification.warning {
+  @apply bg-yellow-600 text-white;
+}
+
+.notification.error {
+  @apply bg-red-600 text-white;
+}
+
+.notification.success {
+  @apply bg-green-600 text-white;
+}
+
+.notification-content {
+  @apply flex items-center justify-between p-4 shadow-lg backdrop-blur-sm;
+}
+
+.notification-message {
+  @apply flex-1 font-medium text-sm;
+}
+
+.notification-close {
+  @apply ml-3 text-xl font-bold bg-transparent border-none cursor-pointer text-white/80 hover:text-white transition-colors w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification.hiding {
+  animation: slideOutRight 0.3s ease-in forwards;
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
