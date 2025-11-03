@@ -8,7 +8,9 @@ import Account from './components/Account';
 import Cart from './components/Cart';
 import Navbar from './components/Navbar';
 import Notification from './components/Notification';
+import apiService from './services/apiService';
 
+// Fallback products for offline mode
 const sampleProducts = [
   { id: 't1', name: 'Aurora Smartphone', category: 'Phones', price: 799.99, image: 'https://via.placeholder.com/400x300?text=Aurora+Phone' },
   { id: 't2', name: 'Nebula Laptop Pro', category: 'Laptops', price: 1299.0, image: 'https://via.placeholder.com/400x300?text=Nebula+Laptop' },
@@ -35,40 +37,84 @@ function AppContent() {
   const [priceRange, setPriceRange] = useState([0, 1500]);
   const [sortBy, setSortBy] = useState('name');
   const [notification, setNotification] = useState({ message: '', type: 'info', isVisible: false });
+  const [products, setProducts] = useState(sampleProducts);
+  const [loading, setLoading] = useState(true);
+  const [backendAvailable, setBackendAvailable] = useState(false);
   
   const isHomePage = location.pathname === '/';
   
-  // Load user from localStorage on app start
+  // Initialize app - try backend first, fallback to localStorage
   useEffect(() => {
-    // Create demo user if no users exist
-    const existingUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
-    if (existingUsers.length === 0) {
-      const demoUser = {
-        id: 1,
-        email: 'demo@example.com',
-        firstName: 'Demo',
-        lastName: 'User',
-        password: 'demo123',
-        orders: [
-          {
-            id: 1001,
-            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-            items: [
-              { id: 't1', name: 'Aurora Smartphone', price: 799.99, quantity: 1, image: 'https://via.placeholder.com/400x300?text=Aurora+Phone' },
-              { id: 't3', name: 'Quantum Earbuds', price: 149.99, quantity: 2, image: 'https://via.placeholder.com/400x300?text=Quantum+Earbuds' }
-            ],
-            total: 1099.97,
-            status: 'Delivered'
+    async function initializeApp() {
+      try {
+        setLoading(true);
+        
+        // Try to connect to backend and load products
+        try {
+          const productsData = await apiService.getProducts();
+          setProducts(productsData);
+          setBackendAvailable(true);
+          
+          // Check if user is already logged in via token
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            const userData = await apiService.getCurrentUser();
+            setUser(userData);
+            
+            // Load user's wishlist from backend
+            const userWishlist = await apiService.getWishlist();
+            setWishlist(userWishlist);
           }
-        ]
-      };
-      localStorage.setItem('mockUsers', JSON.stringify([demoUser]));
+          
+        } catch (backendError) {
+          console.warn('Backend not available, using localStorage fallback:', backendError);
+          setBackendAvailable(false);
+          
+          // Fallback to localStorage logic
+          initializeWithLocalStorage();
+        }
+        
+      } catch (error) {
+        console.error('Failed to initialize app:', error);
+        showNotification('Failed to load application data', 'error');
+      } finally {
+        setLoading(false);
+      }
     }
     
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    function initializeWithLocalStorage() {
+      // Create demo user if no users exist
+      const existingUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+      if (existingUsers.length === 0) {
+        const demoUser = {
+          id: 1,
+          email: 'demo@example.com',
+          firstName: 'Demo',
+          lastName: 'User',
+          password: 'demo123',
+          orders: [
+            {
+              id: 1001,
+              date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+              items: [
+                { id: 't1', name: 'Aurora Smartphone', price: 799.99, quantity: 1, image: 'https://via.placeholder.com/400x300?text=Aurora+Phone' },
+                { id: 't3', name: 'Quantum Earbuds', price: 149.99, quantity: 2, image: 'https://via.placeholder.com/400x300?text=Quantum+Earbuds' }
+              ],
+              total: 1099.97,
+              status: 'Delivered'
+            }
+          ]
+        };
+        localStorage.setItem('mockUsers', JSON.stringify([demoUser]));
+      }
+      
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
     }
+
+    initializeApp();
   }, []);
   
   const suggestions = query.trim().length > 0
@@ -118,15 +164,39 @@ function AppContent() {
     setCart([]);
   }
 
-  function handleToggleWishlist(product) {
-    setWishlist((current) => {
-      const isInWishlist = current.some(item => item.id === product.id);
-      if (isInWishlist) {
-        return current.filter(item => item.id !== product.id);
+  async function handleToggleWishlist(product) {
+    if (!user) {
+      showNotification('Please log in to manage your wishlist', 'warning');
+      return;
+    }
+    
+    try {
+      if (backendAvailable) {
+        const isInWishlist = wishlist.some(item => item.id === product.id);
+        if (isInWishlist) {
+          await apiService.removeFromWishlist(product.id);
+          setWishlist(current => current.filter(item => item.id !== product.id));
+          showNotification('Removed from wishlist', 'info');
+        } else {
+          await apiService.addToWishlist(product.id);
+          setWishlist(current => [...current, product]);
+          showNotification('Added to wishlist', 'success');
+        }
       } else {
-        return [...current, product];
+        // Fallback to localStorage
+        setWishlist((current) => {
+          const isInWishlist = current.some(item => item.id === product.id);
+          if (isInWishlist) {
+            return current.filter(item => item.id !== product.id);
+          } else {
+            return [...current, product];
+          }
+        });
       }
-    });
+    } catch (error) {
+      console.error('Error updating wishlist:', error);
+      showNotification('Failed to update wishlist', 'error');
+    }
   }
 
   function showNotification(message, type = 'info') {
@@ -142,45 +212,92 @@ function AppContent() {
     navigate('/checkout');
   }
 
-  function handleLogin(userData) {
-    setUser(userData);
-    localStorage.setItem('currentUser', JSON.stringify(userData));
-  }
-
-  function handleLogout() {
-    setUser(null);
-    localStorage.removeItem('currentUser');
-  }
-
-  function handlePlaceOrder(orderData) {
-    if (user) {
-      // Add order to user's order history
-      const mockUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
-      const userIndex = mockUsers.findIndex(u => u.id === user.id);
-      
-      if (userIndex !== -1) {
-        const newOrder = {
-          id: Date.now(),
-          date: new Date().toISOString(),
-          items: orderData.items,
-          total: orderData.total,
-          status: 'Delivered'
-        };
+  async function handleLogin(userData) {
+    try {
+      if (backendAvailable) {
+        // userData should already include the token from Login component
+        setUser(userData);
+        localStorage.setItem('authToken', userData.token);
         
-        mockUsers[userIndex].orders = mockUsers[userIndex].orders || [];
-        mockUsers[userIndex].orders.unshift(newOrder);
-        
-        localStorage.setItem('mockUsers', JSON.stringify(mockUsers));
-        
-        // Update current user session
-        const updatedUser = { ...user, orders: mockUsers[userIndex].orders };
-        setUser(updatedUser);
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        // Load user's wishlist from backend
+        const userWishlist = await apiService.getWishlist();
+        setWishlist(userWishlist);
+      } else {
+        // Fallback to localStorage
+        setUser(userData);
+        localStorage.setItem('currentUser', JSON.stringify(userData));
       }
+    } catch (error) {
+      console.error('Error during login:', error);
+      showNotification('Failed to load user data', 'error');
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      if (backendAvailable) {
+        await apiService.logout();
+        localStorage.removeItem('authToken');
+      } else {
+        localStorage.removeItem('currentUser');
+      }
+      setUser(null);
+      setWishlist([]);
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Continue with logout even if backend call fails
+      setUser(null);
+      setWishlist([]);
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('currentUser');
+    }
+  }
+
+  async function handlePlaceOrder(orderData) {
+    if (!user) {
+      showNotification('Please log in to place an order', 'warning');
+      return;
     }
     
-    // Clear cart after order
-    setCart([]);
+    try {
+      if (backendAvailable) {
+        await apiService.createOrder(orderData);
+        showNotification('Order placed successfully!', 'success');
+        setCart([]); // Clear cart after successful order
+        navigate('/account'); // Redirect to account to see order
+      } else {
+        // Fallback to localStorage
+        const mockUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+        const userIndex = mockUsers.findIndex(u => u.id === user.id);
+        
+        if (userIndex !== -1) {
+          const newOrder = {
+            id: Date.now(),
+            date: new Date().toISOString(),
+            items: orderData.items,
+            total: orderData.total,
+            status: 'Processing'
+          };
+          
+          mockUsers[userIndex].orders = mockUsers[userIndex].orders || [];
+          mockUsers[userIndex].orders.unshift(newOrder);
+          
+          localStorage.setItem('mockUsers', JSON.stringify(mockUsers));
+          
+          // Update current user session
+          const updatedUser = { ...user, orders: mockUsers[userIndex].orders };
+          setUser(updatedUser);
+          localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        }
+        
+        showNotification('Order placed successfully!', 'success');
+        setCart([]);
+        navigate('/account');
+      }
+    } catch (error) {
+      console.error('Error placing order:', error);
+      showNotification('Failed to place order. Please try again.', 'error');
+    }
   }
 
   return (
@@ -202,21 +319,27 @@ function AppContent() {
           <Route 
             path="/" 
             element={
-              <Home
-                products={sampleProducts}
-                onAddToCart={handleAdd}
-                query={query}
-                selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
-                priceRange={priceRange}
-                onPriceRangeChange={setPriceRange}
-                sortBy={sortBy}
-                onSortChange={setSortBy}
-                wishlist={wishlist}
-                onToggleWishlist={handleToggleWishlist}
-                user={user}
-                showNotification={showNotification}
-              />
+              loading ? (
+                <div className="flex justify-center items-center min-h-screen">
+                  <div className="text-white text-xl">Loading...</div>
+                </div>
+              ) : (
+                <Home
+                  products={products}
+                  onAddToCart={handleAdd}
+                  query={query}
+                  selectedCategory={selectedCategory}
+                  onSelectCategory={setSelectedCategory}
+                  priceRange={priceRange}
+                  onPriceRangeChange={setPriceRange}
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  wishlist={wishlist}
+                  onToggleWishlist={handleToggleWishlist}
+                  user={user}
+                  showNotification={showNotification}
+                />
+              )
             } 
           />
           <Route 
@@ -227,6 +350,7 @@ function AppContent() {
                 onUpdateCart={setCart}
                 onPlaceOrder={handlePlaceOrder}
                 showNotification={showNotification}
+                currentUser={user}
               />
             } 
           />

@@ -3,7 +3,7 @@ import ProductCard from './ProductCard';
 import FilterSidebar from './FilterSidebar';
 
 export default function Home({ 
-  products, 
+  products = [], // Default to empty array to prevent errors
   onAddToCart, 
   query, 
   selectedCategory, 
@@ -12,11 +12,28 @@ export default function Home({
   onPriceRangeChange,
   sortBy,
   onSortChange,
-  wishlist,
+  wishlist = [], // Default to empty array
   onToggleWishlist,
   user,
   showNotification
 }) {
+  // Handle case where products might be null or undefined
+  if (!products) {
+    return (
+      <main className="catalog">
+        <header className="catalog-header">
+          <h1>E-commerce App</h1>
+          <p className="lead">Loading products...</p>
+        </header>
+        <div className="catalog-content">
+          <div className="loading-message">
+            <h3>Loading products...</h3>
+            <p>Please wait while we fetch the latest products.</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
   // Apply all filters
   let filteredProducts = products
     .filter((p) => selectedCategory === 'All' || p.category === selectedCategory)

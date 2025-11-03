@@ -11,6 +11,8 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  /* allow dropdown to overflow this container so it can appear above other elements */
+  overflow: visible;
 }
 .search input { 
   @apply p-2 px-3 rounded-lg border border-dark-600 w-80 bg-dark-700 text-gray-100 placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500;
@@ -21,6 +23,8 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  /* same as .search: let the suggestions overflow */
+  overflow: visible;
 }
 .search-center input {
   @apply p-2 px-3 rounded-lg border border-dark-600 w-80 bg-dark-700 text-gray-100 placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500;
@@ -31,7 +35,10 @@
 }
 
 .suggestions {
-  @apply absolute left-0 right-0 mt-1.5 bg-dark-700 border border-dark-600 shadow-xl rounded-lg max-h-60 overflow-auto z-40 py-1.5;
+  @apply absolute left-0 right-0 mt-1.5 bg-dark-700 border border-dark-600 shadow-xl rounded-lg max-h-60 overflow-auto py-1.5;
+  /* Ensure suggestions appear above other page elements */
+  z-index: 99999; /* high priority so it sits on top */
+  top: calc(100% + 0.25rem);
 }
 
 .suggestion {
