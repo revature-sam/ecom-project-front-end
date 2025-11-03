@@ -1,6 +1,6 @@
 .product-card {
   @apply w-56 border border-dark-600 rounded-lg overflow-hidden bg-dark-800 shadow-lg flex flex-col transition-all;
-  height: 328px; /* Manually increased from 320px (h-80) to 336px for bottom spacing */
+  height: 328px; 
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .product-card:hover {
