@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import apiService from '../services/apiService';
 import './account.css';
 
 function WishlistItemCard({ item, onRemoveFromWishlist, onAddToCart }) {
@@ -64,10 +65,42 @@ function WishlistItemCard({ item, onRemoveFromWishlist, onAddToCart }) {
 
 export default function Account({ user, onLogout, wishlist, onToggleWishlist, onAddToCart }) {
   const navigate = useNavigate();
+  const [orderHistory, setOrderHistory] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [orderError, setOrderError] = useState(null);
 
   // Debug logging to see what user object we received
   console.log('🔍 Account component user object:', user);
   console.log('🔍 User properties:', user ? Object.keys(user) : 'No user');
+
+  // Fetch order history when component mounts or user changes
+  useEffect(() => {
+    const fetchOrderHistory = async () => {
+      if (!user) {
+        setLoadingOrders(false);
+        return;
+      }
+
+      try {
+        setLoadingOrders(true);
+        setOrderError(null);
+        console.log('🔄 Fetching order history for user:', user);
+        
+        const orders = await apiService.getOrderHistory(user.username || user.id);
+        console.log('✅ Order history loaded:', orders);
+        
+        setOrderHistory(orders || []);
+      } catch (error) {
+        console.error('❌ Failed to load order history:', error);
+        setOrderError(error.message);
+        setOrderHistory([]);
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+
+    fetchOrderHistory();
+  }, [user]);
 
   // Safety check for user object
   if (!user) {
@@ -187,29 +220,61 @@ export default function Account({ user, onLogout, wishlist, onToggleWishlist, on
           <div className="right-column">
             <div className="order-history">
               <h2>Order History</h2>
-              {user.orders && user.orders.length > 0 ? (
+              {loadingOrders ? (
+                <div className="loading-orders">
+                  <p>Loading order history...</p>
+                </div>
+              ) : orderError ? (
+                <div className="order-error">
+                  <p>Error loading orders: {orderError}</p>
+                  <button 
+                    className="retry-btn" 
+                    onClick={() => window.location.reload()}
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : orderHistory && orderHistory.length > 0 ? (
                 <div className="orders-list">
-                  {user.orders.map((order) => (
+                  {orderHistory.map((order) => (
                     <div key={order.id} className="order-card">
                       <div className="order-header">
                         <div className="order-info">
                           <h3>Order #{order.id}</h3>
-                          <p className="order-date">{new Date(order.date).toLocaleDateString()}</p>
+                          <p className="order-date">
+                            {new Date(order.date || order.createdAt || order.orderDate).toLocaleDateString()}
+                          </p>
+                          {order.fallback && (
+                            <span className="fallback-indicator">📱 Local Order</span>
+                          )}
                         </div>
                         <div className="order-total">
-                          <span className="total-amount">${order.total.toFixed(2)}</span>
-                          <span className="order-status">{order.status}</span>
+                          <span className="total-amount">
+                            ${(order.total || order.totalAmount || 0).toFixed(2)}
+                          </span>
+                          <span className="order-status">{order.status || 'Completed'}</span>
                         </div>
                       </div>
                       <div className="order-items">
-                        {order.items.map((item, index) => (
+                        {(order.items || order.orderItems || []).map((item, index) => (
                           <div key={index} className="order-item">
-                            <img src={item.image} alt={item.name} className="item-image" />
+                            <img 
+                              src={item.image || item.itemImage || '/placeholder-image.jpg'} 
+                              alt={item.name || item.itemName} 
+                              className="item-image"
+                              onError={(e) => {
+                                e.target.src = '/placeholder-image.jpg';
+                              }}
+                            />
                             <div className="item-details">
-                              <span className="item-name">{item.name}</span>
-                              <span className="item-quantity">Qty: {item.quantity}</span>
+                              <span className="item-name">{item.name || item.itemName || 'Unknown Item'}</span>
+                              <span className="item-quantity">
+                                Qty: {item.quantity || item.qty || 1}
+                              </span>
                             </div>
-                            <span className="item-price">${(item.price * item.quantity).toFixed(2)}</span>
+                            <span className="item-price">
+                              ${((item.price || item.itemPrice || 0) * (item.quantity || item.qty || 1)).toFixed(2)}
+                            </span>
                           </div>
                         ))}
                       </div>

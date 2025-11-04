@@ -67,9 +67,31 @@ class ApiService {
       const contentType = response.headers.get('content-type');
       console.log('📄 Content-Type:', contentType);
       if (contentType && contentType.includes('application/json')) {
-        const jsonResult = await response.json();
-        console.log('📊 JSON Response:', jsonResult);
-        return jsonResult;
+        let rawText = ''; // Declare outside try block for catch access
+        try {
+          // Get raw text first to debug malformed JSON
+          rawText = await response.text();
+          console.log('🔍 Raw response text:', rawText);
+          
+          // Try to clean up malformed JSON if needed
+          let cleanedText = rawText;
+          
+          // Check for duplicate closing brackets pattern
+          if (rawText.includes('}]}}]}}]}}"')) {
+            console.log('⚠️ Detected malformed JSON with duplicate brackets, attempting to clean...');
+            // Remove extra brackets - keep only the first occurrence
+            cleanedText = rawText.replace(/(\}+\]+\}+\]+\}+\]+\}+["\}]*)+$/, '}');
+            console.log('🧹 Cleaned JSON text:', cleanedText);
+          }
+          
+          const jsonResult = JSON.parse(cleanedText);
+          console.log('📊 Parsed JSON Response:', jsonResult);
+          return jsonResult;
+        } catch (parseError) {
+          console.error('❌ JSON parse error:', parseError);
+          console.error('❌ Raw response causing error:', rawText);
+          throw parseError;
+        }
       }
       
       console.log('📄 Non-JSON response returned');
@@ -99,7 +121,7 @@ class ApiService {
       hasDirectUser: !!(response && response.user),
       hasBodyUser: !!(response && response.body && response.body.user),
       userValue: response ? (response.user || (response.body && response.body.user)) : 'no response',
-      message: response ? (response.messgae || response.message || (response.body && response.body.message)) : 'no message'
+      message: response ? (response.message || (response.body && response.body.message)) : 'no message'
     });
 
     // Handle ResponseEntity structure - check both direct response and response.body
@@ -109,12 +131,12 @@ class ApiService {
     if (response) {
       // Try direct access first
       user = response.user;
-      message = response.messgae || response.message;
+      message = response.message;
       
       // If not found, try ResponseEntity body structure
       if (!user && response.body) {
         user = response.body.user;
-        message = message || response.body.messgae || response.body.message;
+        message = message || response.body.message;
       }
     }
 
@@ -258,20 +280,46 @@ class ApiService {
 
     // Spring CartController has /api/cart/view/{userID} endpoint
     try {
-      const response = await fetch(`${this.baseURL}/cart/view/${currentUser.username}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      console.log('🔄 Fetching cart from backend for user:', currentUser.username);
+      const response = await this.request(`/cart/view/${currentUser.username}`, {
+        method: 'GET'
+      });
+      
+      console.log('📦 Raw cart response from backend:', response);
+      
+      // Check if response is a string (old behavior) or actual cart data
+      if (typeof response === 'string') {
+        console.warn('⚠️ Backend returned string response, cart API may not be fully implemented');
+        return [];
       }
       
-      // CartController returns "Cart viewed" string, not actual cart data
-      const text = await response.text();
-      environment.log('Cart view response:', text);
+      // If response is an array of cart items, transform them to frontend format
+      if (Array.isArray(response)) {
+        const cartItems = response.map(cartItem => ({
+          id: cartItem.item?.id || cartItem.itemId,
+          name: cartItem.item?.name || cartItem.itemName || 'Unknown Item',
+          price: cartItem.item?.price || cartItem.itemPrice || 0,
+          quantity: cartItem.quantity || 1,
+          image: cartItem.item?.imageUrl || cartItem.item?.image || null,
+          category: cartItem.item?.category || 'Unknown'
+        }));
+        
+        console.log('✅ Cart items transformed:', cartItems);
+        return cartItems;
+      }
       
-      // For now, fall back to local storage since backend doesn't return cart data
-      return this.getLocalCart();
+      // If response has a specific structure, handle it accordingly
+      if (response && response.items) {
+        return response.items;
+      }
+      
+      console.log('✅ Cart loaded from backend:', response);
+      return response || [];
+      
     } catch (error) {
-      environment.warn('Cart endpoint error, using local storage:', error);
-      return this.getLocalCart();
+      console.error('❌ Failed to fetch cart from backend:', error);
+      environment.warn('Cart endpoint error:', error);
+      throw new Error(`Failed to get cart: ${error.message}`);
     }
   }
 
@@ -282,31 +330,103 @@ class ApiService {
     }
 
     try {
-      // Spring CartController: POST /api/cart/add/{userID}?itemID=x&quantity=y
-      const url = new URL(`${this.baseURL}/cart/add/${currentUser.username}`);
-      url.searchParams.append('itemID', itemId);
-      url.searchParams.append('quantity', quantity);
+      // Try different parameter formats that Spring might expect
+      console.log('🛒 Adding to cart:', { itemId, quantity, user: currentUser.username });
       
-      const response = await fetch(url, {
+      // First try: JSON body format (common in Spring Boot)
+      let response = await this.request('/cart/add', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: currentUser.username,
+          itemId: itemId,
+          quantity: quantity
+        })
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response) {
+        console.log('✅ Cart add successful (JSON body format)');
+        return { success: true, message: 'Item added to cart' };
+      }
+    } catch (jsonError) {
+      console.log('❌ JSON body format failed, trying query params...', jsonError);
+      
+      // If the error is about duplicate results, try to clear cart first
+      if (jsonError.message && jsonError.message.includes('Query did not return a unique result')) {
+        console.log('🧹 Detected duplicate cart entries, attempting to clear cart first...');
+        try {
+          await this.clearCart();
+          console.log('✅ Cart cleared, retrying add operation...');
+          
+          // Retry the original request after clearing
+          const response = await this.request('/cart/add', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              username: currentUser.username,
+              itemId: itemId,
+              quantity: quantity
+            })
+          });
+          
+          if (response) {
+            console.log('✅ Cart add successful after clearing duplicates');
+            return { success: true, message: 'Item added to cart (after clearing duplicates)' };
+          }
+        } catch (clearError) {
+          console.warn('❌ Failed to clear cart duplicates:', clearError);
+        }
       }
       
-      const text = await response.text(); // Returns "Item added to cart"
-      environment.log('Add to cart response:', text);
-      
-      // Also update local storage for consistency
-      this.addToLocalCart(itemId, quantity);
-      
-      return { success: true, message: text };
-    } catch (error) {
-      environment.warn('Add to cart backend error, using local storage:', error);
-      return this.addToLocalCart(itemId, quantity);
+      try {
+        // Second try: Query parameters with different parameter names
+        const url = new URL(`${this.baseURL}/cart/add/${currentUser.username}`);
+        url.searchParams.append('itemId', itemId); // Try itemId instead of itemID
+        url.searchParams.append('quantity', quantity);
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+          const text = await response.text();
+          console.log('✅ Cart add successful (query params with itemId)');
+          return { success: true, message: text };
+        }
+      } catch (queryError) {
+        console.log('❌ Query params with itemId failed, trying original format...', queryError);
+        
+        try {
+          // Third try: Original format with itemID
+          const url = new URL(`${this.baseURL}/cart/add/${currentUser.username}`);
+          url.searchParams.append('itemID', itemId);
+          url.searchParams.append('quantity', quantity);
+          
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          if (response.ok) {
+            const text = await response.text();
+            console.log('✅ Cart add successful (original format)');
+            return { success: true, message: text };
+          }
+        } catch (originalError) {
+          console.log('❌ All cart API formats failed');
+          environment.warn('Add to cart backend error:', originalError);
+          throw new Error('Failed to add item to cart: backend not available');
+        }
+      }
     }
+    
+    // If all attempts fail, throw error instead of using local storage
+    throw new Error('Failed to add item to cart: all backend attempts failed');
   }
 
   async updateCartItem(itemId, quantity) {
@@ -333,13 +453,10 @@ class ApiService {
       const text = await response.text(); // Returns "Item quantity updated"
       environment.log('Update cart response:', text);
       
-      // Also update local storage for consistency
-      this.updateLocalCartItem(itemId, quantity);
-      
       return { success: true, message: text };
     } catch (error) {
-      environment.warn('Update cart backend error, using local storage:', error);
-      return this.updateLocalCartItem(itemId, quantity);
+      environment.warn('Update cart backend error:', error);
+      throw new Error('Failed to update cart item: backend not available');
     }
   }
 
@@ -366,13 +483,10 @@ class ApiService {
       const text = await response.text(); // Returns "Item removed from cart"
       environment.log('Remove from cart response:', text);
       
-      // Also update local storage for consistency
-      this.removeFromLocalCart(itemId);
-      
       return { success: true, message: text };
     } catch (error) {
-      environment.warn('Remove from cart backend error, using local storage:', error);
-      return this.removeFromLocalCart(itemId);
+      environment.warn('Remove from cart backend error:', error);
+      throw new Error('Failed to remove cart item: backend not available');
     }
   }
 
@@ -395,13 +509,10 @@ class ApiService {
       const text = await response.text(); // Returns "Cart cleared"
       environment.log('Clear cart response:', text);
       
-      // Also clear local storage for consistency
-      this.clearLocalCart();
-      
       return { success: true, message: text };
     } catch (error) {
-      environment.warn('Clear cart backend error, using local storage:', error);
-      return this.clearLocalCart();
+      environment.warn('Clear cart backend error:', error);
+      throw new Error('Failed to clear cart: backend not available');
     }
   }
 
@@ -409,34 +520,97 @@ class ApiService {
   getLocalCart() {
     try {
       const cart = localStorage.getItem('userCart');
-      return cart ? JSON.parse(cart) : [];
+      const parsedCart = cart ? JSON.parse(cart) : [];
+      
+      // Filter out invalid cart items (items with undefined/null/NaN prices or missing required fields)
+      const validCart = parsedCart.filter(item => {
+        const hasValidId = item.id && item.id !== 'undefined' && item.id !== 'null';
+        const hasValidName = item.name && typeof item.name === 'string' && item.name !== 'undefined';
+        const hasValidPrice = item.price !== undefined && item.price !== null && !isNaN(parseFloat(item.price));
+        const hasValidQuantity = item.quantity !== undefined && item.quantity !== null && !isNaN(parseInt(item.quantity)) && parseInt(item.quantity) > 0;
+        
+        const isValid = hasValidId && hasValidName && hasValidPrice && hasValidQuantity;
+        
+        if (!isValid) {
+          console.warn('🗑️ Removing invalid cart item:', item);
+        }
+        
+        return isValid;
+      });
+      
+      // If cart was cleaned up, save the cleaned version back to localStorage
+      if (validCart.length !== parsedCart.length) {
+        console.log('🧹 Cart cleaned up, saving valid items back to localStorage');
+        localStorage.setItem('userCart', JSON.stringify(validCart));
+      }
+      
+      return validCart;
     } catch (error) {
       environment.error('Failed to get local cart:', error);
+      // Clear corrupted cart
+      localStorage.setItem('userCart', JSON.stringify([]));
       return [];
     }
   }
 
-  addToLocalCart(itemId, quantity) {
-    const cart = this.getLocalCart();
-    const existingItem = cart.find(item => item.itemId === parseInt(itemId));
-    
-    if (existingItem) {
-      existingItem.quantity += parseInt(quantity);
-    } else {
-      cart.push({ 
-        itemId: parseInt(itemId), 
-        quantity: parseInt(quantity),
-        addedAt: new Date().toISOString()
-      });
+  async addToLocalCart(itemId, quantity) {
+    try {
+      // Get product details first to store complete item information
+      const product = await this.getProduct(itemId);
+      if (!product) {
+        console.warn('⚠️ Product not found for itemId:', itemId);
+        return this.getLocalCart(); // Return current cart without adding
+      }
+
+      const cart = this.getLocalCart();
+      const existingItem = cart.find(item => item.id === parseInt(itemId));
+      
+      if (existingItem) {
+        existingItem.quantity += parseInt(quantity);
+      } else {
+        // Store complete product information for local cart
+        cart.push({ 
+          id: parseInt(itemId),
+          itemId: parseInt(itemId), // Keep both for compatibility
+          name: product.name,
+          price: product.price,
+          image: product.image || product.imageUrl,
+          category: product.category,
+          quantity: parseInt(quantity),
+          addedAt: new Date().toISOString()
+        });
+      }
+      
+      localStorage.setItem('userCart', JSON.stringify(cart));
+      console.log('✅ Item added to local cart:', cart[cart.length - 1] || 'updated existing');
+      return cart;
+    } catch (error) {
+      console.error('❌ Error adding to local cart:', error);
+      // Fallback: add minimal item info
+      const cart = this.getLocalCart();
+      const existingItem = cart.find(item => item.id === parseInt(itemId) || item.itemId === parseInt(itemId));
+      
+      if (existingItem) {
+        existingItem.quantity += parseInt(quantity);
+      } else {
+        cart.push({ 
+          id: parseInt(itemId),
+          itemId: parseInt(itemId),
+          name: `Item ${itemId}`, // Fallback name
+          price: 0, // Fallback price
+          quantity: parseInt(quantity),
+          addedAt: new Date().toISOString()
+        });
+      }
+      
+      localStorage.setItem('userCart', JSON.stringify(cart));
+      return cart;
     }
-    
-    localStorage.setItem('userCart', JSON.stringify(cart));
-    return cart;
   }
 
   updateLocalCartItem(itemId, quantity) {
     const cart = this.getLocalCart();
-    const itemIndex = cart.findIndex(item => item.itemId === parseInt(itemId));
+    const itemIndex = cart.findIndex(item => item.id === parseInt(itemId) || item.itemId === parseInt(itemId));
     
     if (itemIndex !== -1) {
       if (quantity <= 0) {
@@ -452,7 +626,7 @@ class ApiService {
 
   removeFromLocalCart(itemId) {
     const cart = this.getLocalCart();
-    const filteredCart = cart.filter(item => item.itemId !== parseInt(itemId));
+    const filteredCart = cart.filter(item => item.id !== parseInt(itemId) && item.itemId !== parseInt(itemId));
     localStorage.setItem('userCart', JSON.stringify(filteredCart));
     return filteredCart;
   }
@@ -472,10 +646,34 @@ class ApiService {
   }
 
   async submitOrder(userId, orderData = {}) {
-    return await this.request(`/checkout/submit/${userId}`, {
-      method: 'POST',
-      body: JSON.stringify(orderData)
+    console.log('🔄 Submitting order to backend:', {
+      userId,
+      orderData,
+      endpoint: `/checkout/submit/${userId}`
     });
+    
+    try {
+      const response = await this.request(`/checkout/submit/${userId}`, {
+        method: 'POST',
+        body: JSON.stringify(orderData)
+      });
+      console.log('✅ Order submitted successfully:', response);
+      
+      return response;
+    } catch (error) {
+      console.error('❌ Backend order submission failed:', error);
+      
+      // Enhanced error logging
+      console.log('🔍 Order submission error details:', {
+        error: error.message,
+        userId,
+        orderDataKeys: Object.keys(orderData),
+        orderDataSize: JSON.stringify(orderData).length
+      });
+      
+      // Don't save to localStorage - let the error propagate
+      throw error;
+    }
   }
 
   async validateCheckout(userId) {
@@ -541,20 +739,141 @@ class ApiService {
     return { success: false, message: 'Not implemented' };
   }
 
-  // Order endpoints (not fully implemented in backend yet)
+  // Order endpoints - Order History functionality
   async getOrders() {
     const currentUser = this.getCurrentUserData();
     if (!currentUser) {
       throw new Error('User not authenticated');
     }
     
-    environment.warn('Get orders not implemented in backend');
-    return [];
+    return await this.getOrderHistory(currentUser.username || currentUser.id);
+  }
+
+  async getOrderHistory(userId) {
+    console.log('🔄 Fetching order history for user:', userId);
+    
+    try {
+      // Only get order history from backend order_history table
+      const response = await this.request(`/orders/history/${userId}`, {
+        method: 'GET'
+      });
+      
+      console.log('✅ Order history fetched successfully from backend:', response);
+      
+      // Transform the response to group items by orderNumber
+      const groupedOrders = this.transformOrderHistory(response || []);
+      console.log('🔄 Transformed order history:', groupedOrders);
+      
+      return groupedOrders;
+      
+    } catch (error) {
+      console.error('❌ Failed to fetch order history from backend:', error);
+      console.log('📭 No localStorage fallback - returning empty array');
+      
+      // No fallback to localStorage - only show backend orders
+      return [];
+    }
+  }
+
+  // Transform individual order items into grouped orders
+  transformOrderHistory(orderItems) {
+    if (!orderItems || !Array.isArray(orderItems)) {
+      return [];
+    }
+
+    // Group order items by orderNumber
+    const orderGroups = orderItems.reduce((groups, orderItem) => {
+      const orderNumber = orderItem.orderNumber;
+      
+      if (!groups[orderNumber]) {
+        groups[orderNumber] = {
+          id: orderNumber,
+          orderNumber: orderNumber,
+          date: orderItem.orderDate,
+          total: orderItem.orderTotalAmount,
+          status: 'Completed',
+          items: []
+        };
+      }
+      
+      // Add the item to this order
+      groups[orderNumber].items.push({
+        id: orderItem.item.id,
+        name: orderItem.item.name,
+        price: orderItem.itemPrice,
+        quantity: orderItem.quantity,
+        image: orderItem.item.imageUrl,
+        category: orderItem.item.category
+      });
+      
+      return groups;
+    }, {});
+
+    // Convert to array and sort by date (newest first)
+    return Object.values(orderGroups).sort((a, b) => 
+      new Date(b.date) - new Date(a.date)
+    );
+  }
+
+  // Local fallback for order history
+  getLocalOrderHistory(userId) {
+    try {
+      const orderHistory = localStorage.getItem(`orderHistory_${userId}`);
+      return orderHistory ? JSON.parse(orderHistory) : [];
+    } catch (error) {
+      console.error('❌ Failed to parse local order history:', error);
+      return [];
+    }
+  }
+
+  // Save order to local history (fallback)
+  saveOrderToLocalHistory(userId, orderData) {
+    try {
+      const existingHistory = this.getLocalOrderHistory(userId);
+      const newOrder = {
+        id: `local_${Date.now()}`,
+        date: new Date().toISOString(),
+        total: orderData.total || 0,
+        status: 'Completed',
+        items: orderData.items || [],
+        userId: userId,
+        ...orderData
+      };
+      
+      const updatedHistory = [newOrder, ...existingHistory];
+      localStorage.setItem(`orderHistory_${userId}`, JSON.stringify(updatedHistory));
+      console.log('💾 Order saved to local history:', newOrder);
+      
+      return newOrder;
+    } catch (error) {
+      console.error('❌ Failed to save order to local history:', error);
+      return null;
+    }
   }
 
   async getOrder(orderId) {
-    environment.warn('Get order not implemented in backend');
-    return null;
+    console.log('🔄 Fetching specific order:', orderId);
+    
+    try {
+      const response = await this.request(`/orders/${orderId}`, {
+        method: 'GET'
+      });
+      
+      console.log('✅ Order fetched successfully:', response);
+      return response;
+      
+    } catch (error) {
+      console.error('❌ Failed to fetch order:', error);
+      
+      // Fallback to check local storage
+      const currentUser = this.getCurrentUserData();
+      if (currentUser) {
+        const localHistory = this.getLocalOrderHistory(currentUser.username || currentUser.id);
+        return localHistory.find(order => order.id === orderId) || null;
+      }
+      
+      return null;
+    }
   }
 
   // Category endpoints (not implemented in backend)

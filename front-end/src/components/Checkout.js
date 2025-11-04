@@ -88,7 +88,11 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
   }
 
   function calculateFallbackSummary() {
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = cart.reduce((sum, item) => {
+      const price = parseFloat(item.price) || 0;
+      const quantity = parseInt(item.quantity) || 0;
+      return sum + (price * quantity);
+    }, 0);
     const discountAmount = appliedDiscount ? (subtotal * appliedDiscount.discount) : 0;
     const tax = (subtotal - discountAmount) * 0.08; // 8% tax
     const shipping = subtotal > 50 ? 0 : 9.99; // Free shipping over $50
@@ -246,24 +250,8 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
 
       const userId = getUserId();
       
-      // Sync frontend cart with backend before validation
-      console.log('🔄 Syncing cart with backend for user:', userId);
-      try {
-        // Add each cart item to backend cart to ensure synchronization
-        for (const item of cart) {
-          console.log(`📦 Adding item ${item.id} (qty: ${item.quantity}) to backend cart`);
-          const addResult = await apiService.addToCart(item.id, item.quantity);
-          console.log(`✅ Item ${item.id} added result:`, addResult);
-        }
-        console.log('✅ Cart synchronized with backend');
-      } catch (syncError) {
-        console.warn('⚠️ Cart sync failed:', syncError);
-        console.log('🔍 Sync error details:', {
-          error: syncError.message,
-          userId: userId,
-          cartItems: cart.map(item => ({ id: item.id, quantity: item.quantity }))
-        });
-      }
+      // Note: Cart should already be synchronized with backend from add-to-cart operations
+      console.log('🔄 Proceeding with order submission for user:', userId);
 
       // Validate checkout
       try {
@@ -295,12 +283,12 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
       };
 
       // Submit order to backend
-      const response = await apiService.submitOrder(userId, orderData);
+      try {
+        const response = await apiService.submitOrder(userId, orderData);
 
-      if (response.success) {
         // Call the parent's order handler if provided
         if (onPlaceOrder) {
-          onPlaceOrder(orderData);
+          onPlaceOrder({ ...orderData, orderId: response.orderId, success: true });
         }
 
         if (showNotification) {
@@ -308,6 +296,22 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
         }
 
         navigate('/');
+      } catch (orderError) {
+        console.error('❌ Backend order submission failed:', orderError);
+        
+        // No local fallback - just notify user of failure
+        if (onPlaceOrder) {
+          onPlaceOrder({ ...orderData, success: false, error: orderError.message });
+        }
+
+        if (showNotification) {
+          showNotification(
+            `Order submission failed: ${orderError.message}. Please try again.`, 
+            'error'
+          );
+        }
+
+        // Don't navigate away on failure - let user try again
       }
     } catch (error) {
       console.error('Failed to place order:', error);
@@ -362,7 +366,7 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
                   <img src={item.image} alt={item.name} className="item-image" />
                   <div className="item-details">
                     <h3 className="item-name">{item.name}</h3>
-                    <p className="item-price">${item.price.toFixed(2)}</p>
+                    <p className="item-price">${(parseFloat(item.price) || 0).toFixed(2)}</p>
                   </div>
                   <div className="quantity-controls">
                     <button 
@@ -380,7 +384,7 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
                     </button>
                   </div>
                   <div className="item-total">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    ${((parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)).toFixed(2)}
                   </div>
                   <button 
                     className="remove-btn"
@@ -529,25 +533,25 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
             <div className="totals-breakdown">
               <div className="total-line">
                 <span>Subtotal</span>
-                <span>${summary.subtotal.toFixed(2)}</span>
+                <span>${(summary?.subtotal || 0).toFixed(2)}</span>
               </div>
-              {summary.discountAmount > 0 && (
+              {(summary?.discountAmount || 0) > 0 && (
                 <div className="total-line discount-line">
                   <span>Discount</span>
-                  <span>-${summary.discountAmount.toFixed(2)}</span>
+                  <span>-${(summary?.discountAmount || 0).toFixed(2)}</span>
                 </div>
               )}
               <div className="total-line">
                 <span>Shipping</span>
-                <span>{summary.shipping === 0 ? 'FREE' : `$${summary.shipping.toFixed(2)}`}</span>
+                <span>{(summary?.shipping || 0) === 0 ? 'FREE' : `$${(summary?.shipping || 0).toFixed(2)}`}</span>
               </div>
               <div className="total-line">
                 <span>Tax</span>
-                <span>${summary.tax.toFixed(2)}</span>
+                <span>${(summary?.tax || 0).toFixed(2)}</span>
               </div>
               <div className="total-line final-total">
                 <span>Total</span>
-                <span>${summary.total.toFixed(2)}</span>
+                <span>${(summary?.total || 0).toFixed(2)}</span>
               </div>
             </div>
             
@@ -556,7 +560,7 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
               onClick={handlePlaceOrder}
               disabled={cart.length === 0 || isLoading}
             >
-              {isLoading ? 'Processing...' : `Place Order - $${summary.total.toFixed(2)}`}
+              {isLoading ? 'Processing...' : `Place Order - $${(summary?.total || 0).toFixed(2)}`}
             </button>
 
             <div className="payment-info">

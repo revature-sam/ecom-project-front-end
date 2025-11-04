@@ -76,15 +76,45 @@ function AppContent() {
           
           if (currentUser) {
             setUser(currentUser);
-            console.log('✅ User already logged in:', currentUser.username || currentUser.email || 'Unknown user');
+            console.log('✅ User restored from localStorage on startup:', currentUser.username || currentUser.email || 'Unknown user');
+            
+            // Try to load user's cart from backend only
+            try {
+              console.log('🛒 Loading user cart from backend...');
+              const userCart = await apiService.getCart();
+              console.log('🛒 Backend cart loaded:', userCart);
+              
+              // Additional validation to ensure cart items are valid
+              const validCart = (userCart || []).filter(item => {
+                const isValid = item && item.id && item.name && 
+                              item.price !== undefined && !isNaN(parseFloat(item.price)) &&
+                              item.quantity !== undefined && !isNaN(parseInt(item.quantity)) &&
+                              parseInt(item.quantity) > 0;
+                if (!isValid) {
+                  console.warn('🗑️ Filtering out invalid cart item during startup:', item);
+                }
+                return isValid;
+              });
+              
+              setCart(validCart);
+              console.log('✅ Cart loaded from backend successfully:', validCart.length, 'items');
+            } catch (cartError) {
+              console.warn('⚠️ Could not load cart from backend:', cartError);
+              // Start with empty cart if backend cart fails
+              setCart([]);
+              console.log('🛒 Starting with empty cart due to backend cart unavailable');
+            }
             
             // Try to load user's wishlist from backend
             try {
               const userWishlist = await apiService.getWishlist();
               setWishlist(userWishlist);
+              console.log('✅ Wishlist loaded from backend');
             } catch (wishlistError) {
-              console.warn('Could not load wishlist from backend:', wishlistError);
+              console.warn('⚠️ Could not load wishlist from backend:', wishlistError);
             }
+          } else {
+            console.log('❌ No user data found in localStorage during startup');
           }
           
         } catch (backendError) {
@@ -104,6 +134,8 @@ function AppContent() {
     }
     
     function initializeWithLocalStorage() {
+      console.log('🔄 Initializing with localStorage fallback...');
+      
       // Create demo user if no users exist
       const existingUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
       if (existingUsers.length === 0) {
@@ -130,13 +162,61 @@ function AppContent() {
       }
       
       const savedUser = localStorage.getItem('currentUser');
+      console.log('🔍 localStorage fallback - checking for saved user:', savedUser);
       if (savedUser) {
-        setUser(JSON.parse(savedUser));
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        console.log('✅ Restored user from localStorage:', parsedUser.username || parsedUser.email);
+        
+        // Load cart from localStorage when user is restored
+        const localCart = apiService.getLocalCart();
+        
+        // Validate cart items
+        const validCart = localCart.filter(item => {
+          const isValid = item && item.id && item.name && 
+                        item.price !== undefined && !isNaN(parseFloat(item.price)) &&
+                        item.quantity !== undefined && !isNaN(parseInt(item.quantity));
+          if (!isValid) {
+            console.warn('🗑️ Filtering out invalid cart item during localStorage init:', item);
+          }
+          return isValid;
+        });
+        
+        setCart(validCart || []);
+        console.log('🛒 Restored cart from localStorage:', validCart);
+      } else {
+        console.log('❌ No saved user found in localStorage');
       }
     }
 
     initializeApp();
   }, []);
+
+  // Helper function to reload cart from backend
+  const reloadCartFromBackend = async () => {
+    if (!user) return;
+    
+    try {
+      console.log('🔄 Reloading cart from backend...');
+      const userCart = await apiService.getCart();
+      console.log('🛒 Cart reloaded:', userCart);
+      
+      const validCart = (userCart || []).filter(item => {
+        const isValid = item && item.id && item.name && 
+                      item.price !== undefined && !isNaN(parseFloat(item.price)) &&
+                      item.quantity !== undefined && !isNaN(parseInt(item.quantity)) &&
+                      parseInt(item.quantity) > 0;
+        return isValid;
+      });
+      
+      setCart(validCart);
+      console.log('✅ Cart reloaded successfully:', validCart.length, 'items');
+      return validCart;
+    } catch (error) {
+      console.error('❌ Failed to reload cart:', error);
+      return [];
+    }
+  };
   
   const suggestions = query.trim().length > 0
     ? (() => {
@@ -149,40 +229,105 @@ function AppContent() {
       })()
     : [];
 
-  function handleAdd(product) {
-    setCart((cur) => {
-      const prevCount = cur.reduce((s, c) => s + c.quantity, 0);
-      const exists = cur.find((c) => c.id === product.id);
-      let next;
-      if (exists) {
-        next = cur.map((c) => c.id === product.id ? { ...c, quantity: c.quantity + 1 } : c);
-      } else {
-        next = [...cur, { ...product, quantity: 1 }];
+  async function handleAdd(product) {
+    // Validate product before adding to cart
+    if (!product || !product.id || !product.name || product.price === undefined || product.price === null || isNaN(parseFloat(product.price))) {
+      console.error('❌ Invalid product, cannot add to cart:', product);
+      showNotification('Error: Invalid product data', 'error');
+      return;
+    }
+
+    if (!user) {
+      showNotification('Please log in to add items to cart', 'warning');
+      return;
+    }
+
+    try {
+      // Add to backend cart first
+      console.log('🛒 Adding item to backend cart:', product.name);
+      await apiService.addToCart(product.id, 1);
+      
+      // Reload cart from backend to get the current state
+      await reloadCartFromBackend();
+      
+      // Show animation effect
+      setBump(true);
+      window.setTimeout(() => setBump(false), 380);
+
+      showNotification(`${product.name} added to cart!`, 'success');
+    } catch (error) {
+      console.error('❌ Failed to add item to backend cart:', error);
+      showNotification(`Failed to add ${product.name} to cart. ${error.message}`, 'error');
+    }
+  }
+
+  async function handleRemove(productId) {
+    if (!user) {
+      showNotification('Please log in to modify cart', 'warning');
+      return;
+    }
+
+    try {
+      // Remove from backend cart first
+      console.log('🛒 Removing item from backend cart:', productId);
+      await apiService.removeFromCart(productId);
+      
+      // Reload cart from backend to get the current state
+      await reloadCartFromBackend();
+
+      showNotification('Item removed from cart', 'success');
+    } catch (error) {
+      console.error('❌ Failed to remove item from backend cart:', error);
+      showNotification(`Failed to remove item from cart. ${error.message}`, 'error');
+    }
+  }
+
+  async function handleChangeQuantity(productId, newQuantity) {
+    if (!user) {
+      showNotification('Please log in to modify cart', 'warning');
+      return;
+    }
+
+    try {
+      if (newQuantity <= 0) {
+        // If quantity is 0 or less, remove the item
+        await handleRemove(productId);
+        return;
       }
 
-      const nextCount = next.reduce((s, c) => s + c.quantity, 0);
-      if (nextCount > prevCount) {
-        setBump(true);
-        window.setTimeout(() => setBump(false), 380);
-      }
+      // Update quantity in backend cart first
+      console.log('🛒 Updating item quantity in backend cart:', { productId, newQuantity });
+      await apiService.updateCartItem(productId, newQuantity);
+      
+      // Reload cart from backend to get the current state
+      await reloadCartFromBackend();
 
-      return next;
-    });
+      showNotification('Cart updated', 'success');
+    } catch (error) {
+      console.error('❌ Failed to update cart quantity in backend:', error);
+      showNotification(`Failed to update cart. ${error.message}`, 'error');
+    }
   }
 
-  function handleRemove(productId) {
-    setCart((cur) => cur.filter((c) => c.id !== productId));
-  }
+  async function handleClearCart() {
+    if (!user) {
+      showNotification('Please log in to clear cart', 'warning');
+      return;
+    }
 
-  function handleChangeQuantity(productId, newQuantity) {
-    setCart((cur) => {
-      if (newQuantity <= 0) return cur.filter((c) => c.id !== productId);
-      return cur.map((c) => c.id === productId ? { ...c, quantity: newQuantity } : c);
-    });
-  }
+    try {
+      // Clear backend cart first
+      console.log('🛒 Clearing backend cart');
+      await apiService.clearCart();
+      
+      // Reload cart from backend to get the current state (should be empty)
+      await reloadCartFromBackend();
 
-  function handleClearCart() {
-    setCart([]);
+      showNotification('Cart cleared', 'success');
+    } catch (error) {
+      console.error('❌ Failed to clear backend cart:', error);
+      showNotification(`Failed to clear cart. ${error.message}`, 'error');
+    }
   }
 
   async function handleToggleWishlist(product) {
@@ -238,45 +383,111 @@ function AppContent() {
     console.log('🔍 userData type:', typeof userData);
     console.log('🔍 userData properties:', userData ? Object.keys(userData) : 'No userData');
     
+    if (!userData) {
+      console.error('❌ No userData provided to handleLogin');
+      showNotification('Login failed - no user data', 'error');
+      return;
+    }
+    
     try {
+      // Set user immediately
+      setUser(userData);
+      localStorage.setItem('currentUser', JSON.stringify(userData));
+      console.log('✅ User stored successfully:', userData);
+
+      // Try to load additional data, but don't let it break the login
       if (backendAvailable) {
-        // userData should already include the token from Login component
-        setUser(userData);
-        localStorage.setItem('authToken', userData.token);
-        console.log('✅ Stored user in App state:', userData);
-        
-        // Load user's wishlist from backend
-        const userWishlist = await apiService.getWishlist();
-        setWishlist(userWishlist);
+        // Load cart and wishlist in background - don't wait or fail on errors
+        setTimeout(async () => {
+          try {
+            const userCart = await apiService.getCart();
+            console.log('🛒 Cart loaded after login:', userCart);
+            
+            // Validate cart items
+            const validCart = userCart.filter(item => {
+              const isValid = item && item.id && item.name && 
+                            item.price !== undefined && !isNaN(parseFloat(item.price)) &&
+                            item.quantity !== undefined && !isNaN(parseInt(item.quantity));
+              if (!isValid) {
+                console.warn('🗑️ Filtering out invalid cart item during login:', item);
+              }
+              return isValid;
+            });
+            
+            setCart(validCart || []);
+          } catch (cartError) {
+            console.warn('⚠️ Could not load cart after login:', cartError);
+            const localCart = apiService.getLocalCart();
+            setCart(localCart || []);
+            console.log('🛒 Using local cart after login:', localCart);
+          }
+          
+          try {
+            const userWishlist = await apiService.getWishlist();
+            setWishlist(userWishlist);
+          } catch (wishlistError) {
+            console.warn('⚠️ Could not load wishlist:', wishlistError);
+          }
+        }, 100);
       } else {
         // Fallback to localStorage
+        console.log('🔄 Loading cart from localStorage in fallback mode');
+        
+        // Load cart from localStorage in fallback mode
+        const localCart = apiService.getLocalCart();
+        
+        // Validate cart items
+        const validCart = localCart.filter(item => {
+          const isValid = item && item.id && item.name && 
+                        item.price !== undefined && !isNaN(parseFloat(item.price)) &&
+                        item.quantity !== undefined && !isNaN(parseInt(item.quantity));
+          if (!isValid) {
+            console.warn('🗑️ Filtering out invalid cart item during fallback login:', item);
+          }
+          return isValid;
+        });
+        
+        setCart(validCart || []);
+        console.log('🛒 Loaded local cart after login:', validCart);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error during login setup:', error);
+      // Still set the user even if additional data loading fails
+      if (!user) {
         setUser(userData);
         localStorage.setItem('currentUser', JSON.stringify(userData));
-        console.log('✅ Stored user in localStorage fallback:', userData);
+        console.log('✅ User stored successfully despite errors');
       }
-    } catch (error) {
-      console.error('Error during login:', error);
-      showNotification('Failed to load user data', 'error');
+      showNotification('Login successful, but some data may not be available', 'warning');
     }
   }
 
   async function handleLogout() {
+    console.log('🔄 Logging out user...');
     try {
       if (backendAvailable) {
         await apiService.logout();
-        localStorage.removeItem('authToken');
-      } else {
-        localStorage.removeItem('currentUser');
       }
+      
+      // Always clear all authentication data regardless of backend availability
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('currentUser');
+      console.log('✅ Cleared all authentication data from localStorage');
+      
       setUser(null);
+      setCart([]); // Clear cart on logout
       setWishlist([]);
+      console.log('✅ Cleared user state and cart in App');
     } catch (error) {
       console.error('Error during logout:', error);
       // Continue with logout even if backend call fails
-      setUser(null);
-      setWishlist([]);
       localStorage.removeItem('authToken');
       localStorage.removeItem('currentUser');
+      setUser(null);
+      setCart([]); // Clear cart on logout even if error
+      setWishlist([]);
+      console.log('⚠️ Logout completed despite backend error');
     }
   }
 
@@ -286,44 +497,31 @@ function AppContent() {
       return;
     }
     
+    console.log('🛒 App handling order completion:', orderData);
+    
     try {
-      if (backendAvailable) {
-        await apiService.createOrder(orderData);
-        showNotification('Order placed successfully!', 'success');
-        setCart([]); // Clear cart after successful order
-        navigate('/account'); // Redirect to account to see order
+      // Note: This is called AFTER the Checkout component has tried backend submission
+      // This function handles the order processing result
+      
+      if (orderData.success === false) {
+        console.log('❌ Backend order submission failed');
+        showNotification('Order submission failed. Please try again.', 'error');
       } else {
-        // Fallback to localStorage
-        const mockUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
-        const userIndex = mockUsers.findIndex(u => u.id === user.id);
-        
-        if (userIndex !== -1) {
-          const newOrder = {
-            id: Date.now(),
-            date: new Date().toISOString(),
-            items: orderData.items,
-            total: orderData.total,
-            status: 'Processing'
-          };
-          
-          mockUsers[userIndex].orders = mockUsers[userIndex].orders || [];
-          mockUsers[userIndex].orders.unshift(newOrder);
-          
-          localStorage.setItem('mockUsers', JSON.stringify(mockUsers));
-          
-          // Update current user session
-          const updatedUser = { ...user, orders: mockUsers[userIndex].orders };
-          setUser(updatedUser);
-          localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-        }
-        
+        console.log('✅ Backend order submitted successfully');
         showNotification('Order placed successfully!', 'success');
-        setCart([]);
-        navigate('/account');
       }
+
+      // Always clear cart after order attempt (successful or failed)
+      setCart([]); // Clear cart after order
+      localStorage.setItem('userCart', JSON.stringify([])); // Clear cart from localStorage too
+      console.log('🛒 Cart cleared from state and localStorage after order completion');
+      
+      // Don't save orders to localStorage - orders will only come from backend
+      console.log('📋 Order history will be fetched from backend only');
+      
     } catch (error) {
-      console.error('Error placing order:', error);
-      showNotification('Failed to place order. Please try again.', 'error');
+      console.error('❌ Error in handlePlaceOrder:', error);
+      showNotification('An error occurred. Please try again.', 'error');
     }
   }
 
