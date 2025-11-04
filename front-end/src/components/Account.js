@@ -156,15 +156,6 @@ export default function Account({ user, onLogout, wishlist, onToggleWishlist, on
               <h2>Account Information</h2>
               <div className="info-card">
                 <div className="info-item">
-                  <label>Name</label>
-                  <span>
-                    {user.firstName && user.lastName 
-                      ? `${user.firstName} ${user.lastName}`
-                      : user.username || user.name || 'User'
-                    }
-                  </span>
-                </div>
-                <div className="info-item">
                   <label>Username</label>
                   <span>{user.username || user.email || 'N/A'}</span>
                 </div>
@@ -182,10 +173,6 @@ export default function Account({ user, onLogout, wishlist, onToggleWishlist, on
                       : 'Unknown'
                     }
                   </span>
-                </div>
-                <div className="info-item">
-                  <label>Account ID</label>
-                  <span>{user.id || user.userId || user.username || 'N/A'}</span>
                 </div>
               </div>
             </div>
