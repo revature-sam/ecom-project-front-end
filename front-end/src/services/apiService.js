@@ -40,13 +40,17 @@ class ApiService {
   // Helper method for making requests
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    console.log('🌐 Making API request to:', url);
     const config = {
       headers: this.getAuthHeaders(),
       ...options
     };
+    console.log('🔧 Request config:', config);
 
     try {
       const response = await fetch(url, config);
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (response.status === 401) {
         // Authentication failed
@@ -61,12 +65,17 @@ class ApiService {
 
       // Handle empty responses
       const contentType = response.headers.get('content-type');
+      console.log('📄 Content-Type:', contentType);
       if (contentType && contentType.includes('application/json')) {
-        return await response.json();
+        const jsonResult = await response.json();
+        console.log('📊 JSON Response:', jsonResult);
+        return jsonResult;
       }
       
+      console.log('📄 Non-JSON response returned');
       return response;
     } catch (error) {
+      console.error('❌ API request failed for', endpoint, ':', error);
       environment.error(`API request failed for ${endpoint}:`, error);
       throw error;
     }
@@ -74,17 +83,53 @@ class ApiService {
 
   // Authentication endpoints - Updated for Spring backend
   async login(username, password) {
-    // Spring backend uses GET with query parameters for login
-    const params = new URLSearchParams({ username, password });
-    const response = await this.request(`/users/login?${params}`);
+    // Spring backend uses @RequestBody User loginRequest
+    const response = await this.request('/users/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+    });
+    
+    console.log('🔍 Login response analysis:', {
+      hasResponse: !!response,
+      responseKeys: response ? Object.keys(response) : 'no response',
+      fullResponse: response,
+      hasDirectUser: !!(response && response.user),
+      hasBodyUser: !!(response && response.body && response.body.user),
+      userValue: response ? (response.user || (response.body && response.body.user)) : 'no response',
+      message: response ? (response.messgae || response.message || (response.body && response.body.message)) : 'no message'
+    });
+
+    // Handle ResponseEntity structure - check both direct response and response.body
+    let user = null;
+    let message = null;
     
     if (response) {
+      // Try direct access first
+      user = response.user;
+      message = response.messgae || response.message;
+      
+      // If not found, try ResponseEntity body structure
+      if (!user && response.body) {
+        user = response.body.user;
+        message = message || response.body.messgae || response.body.message;
+      }
+    }
+
+    if (user) {
       // Store user data instead of token
-      localStorage.setItem('currentUser', JSON.stringify(response));
-      environment.log('User logged in successfully:', response.username);
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      environment.log('User logged in successfully:', user.username);
+      return { user, message };
+    } else if (message) {
+      // Backend returned a message but no user - likely authentication failure
+      console.log('🚫 Login failed with message:', message);
+      throw new Error(`Login failed: ${message}`);
     }
     
-    return response;
+    throw new Error('Login failed - invalid response');
   }
 
   async register(username, password, email) {
@@ -144,45 +189,88 @@ class ApiService {
     });
   }
 
-  // Product endpoints - ItemController is stub, will return empty for now
+  // Product endpoints - Updated for Spring ItemController
   async getProducts() {
-    // Backend ItemController returns null, implementing fallback
     try {
-      return await this.request('/items');
+      console.log('🔄 ApiService.getProducts() - Making request to /items');
+      // Spring ItemController has /api/items endpoint
+      const result = await this.request('/items');
+      console.log('📦 ApiService.getProducts() - Response received:', result);
+      console.log('📦 Response type:', typeof result);
+      console.log('📦 Response length:', result ? result.length : 'N/A');
+      return result;
     } catch (error) {
-      environment.warn('Items endpoint not implemented, returning empty array');
+      console.error('❌ ApiService.getProducts() - Error:', error);
+      environment.warn('Items endpoint error:', error);
       return [];
     }
   }
 
   async getProduct(productId) {
     try {
+      // Spring ItemController has /api/items/{itemId} endpoint
       return await this.request(`/items/${productId}`);
     } catch (error) {
-      environment.warn('Get item endpoint not implemented');
+      environment.warn('Get item endpoint error:', error);
       return null;
     }
   }
 
-  async searchProducts(query, filters = {}) {
-    // Backend doesn't have search implemented yet
-    environment.warn('Search not implemented in backend');
-    return [];
+  async getProductsSorted(sortBy, order = 'asc') {
+    try {
+      // Spring ItemController has sorting endpoints
+      if (sortBy === 'price') {
+        return await this.request(`/items/sorted/price/${order}`);
+      } else if (sortBy === 'name') {
+        return await this.request(`/items/sorted/name/${order}`);
+      } else {
+        return await this.getProducts();
+      }
+    } catch (error) {
+      environment.warn('Get sorted items error:', error);
+      return [];
+    }
   }
 
-  // Cart endpoints - Updated for Spring backend Cart Service
+  async searchProducts(query, filters = {}) {
+    // Backend doesn't have search implemented yet, filter locally
+    try {
+      const products = await this.getProducts();
+      if (!query) return products;
+      
+      return products.filter(product => 
+        product.name?.toLowerCase().includes(query.toLowerCase()) ||
+        product.description?.toLowerCase().includes(query.toLowerCase()) ||
+        product.category?.toLowerCase().includes(query.toLowerCase())
+      );
+    } catch (error) {
+      environment.warn('Search error:', error);
+      return [];
+    }
+  }
+
+  // Cart endpoints - Updated for Spring backend CartController with actual REST mappings
   async getCart() {
     const currentUser = this.getCurrentUserData();
     if (!currentUser) {
       throw new Error('User not authenticated');
     }
 
-    // Note: CartController doesn't have REST mappings yet
-    // Will need to implement in backend or use local storage fallback
+    // Spring CartController has /api/cart/view/{userID} endpoint
     try {
-      return await this.request(`/cart/${currentUser.id}`);
+      const response = await fetch(`${this.baseURL}/cart/view/${currentUser.username}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // CartController returns "Cart viewed" string, not actual cart data
+      const text = await response.text();
+      environment.log('Cart view response:', text);
+      
+      // For now, fall back to local storage since backend doesn't return cart data
+      return this.getLocalCart();
     } catch (error) {
-      environment.warn('Cart endpoint not implemented, using local storage');
+      environment.warn('Cart endpoint error, using local storage:', error);
       return this.getLocalCart();
     }
   }
@@ -194,17 +282,29 @@ class ApiService {
     }
 
     try {
-      // When backend implements CartController REST mappings
-      return await this.request('/cart', {
+      // Spring CartController: POST /api/cart/add/{userID}?itemID=x&quantity=y
+      const url = new URL(`${this.baseURL}/cart/add/${currentUser.username}`);
+      url.searchParams.append('itemID', itemId);
+      url.searchParams.append('quantity', quantity);
+      
+      const response = await fetch(url, {
         method: 'POST',
-        body: JSON.stringify({ 
-          userId: currentUser.id.toString(), 
-          itemId: parseInt(itemId), 
-          quantity: parseInt(quantity) 
-        })
+        headers: { 'Content-Type': 'application/json' }
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const text = await response.text(); // Returns "Item added to cart"
+      environment.log('Add to cart response:', text);
+      
+      // Also update local storage for consistency
+      this.addToLocalCart(itemId, quantity);
+      
+      return { success: true, message: text };
     } catch (error) {
-      environment.warn('Add to cart endpoint not implemented, using local storage');
+      environment.warn('Add to cart backend error, using local storage:', error);
       return this.addToLocalCart(itemId, quantity);
     }
   }
@@ -216,15 +316,29 @@ class ApiService {
     }
 
     try {
-      return await this.request(`/cart/${itemId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ 
-          userId: currentUser.id.toString(), 
-          quantity: parseInt(quantity) 
-        })
+      // Spring CartController: PUT /api/cart/update/{userID}?itemID=x&newQuantity=y
+      const url = new URL(`${this.baseURL}/cart/update/${currentUser.username}`);
+      url.searchParams.append('itemID', itemId);
+      url.searchParams.append('newQuantity', quantity);
+      
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const text = await response.text(); // Returns "Item quantity updated"
+      environment.log('Update cart response:', text);
+      
+      // Also update local storage for consistency
+      this.updateLocalCartItem(itemId, quantity);
+      
+      return { success: true, message: text };
     } catch (error) {
-      environment.warn('Update cart endpoint not implemented, using local storage');
+      environment.warn('Update cart backend error, using local storage:', error);
       return this.updateLocalCartItem(itemId, quantity);
     }
   }
@@ -236,12 +350,28 @@ class ApiService {
     }
 
     try {
-      return await this.request(`/cart/${itemId}`, {
+      // Spring CartController: DELETE /api/cart/remove/{userID}?itemID=x
+      const url = new URL(`${this.baseURL}/cart/remove/${currentUser.username}`);
+      url.searchParams.append('itemID', itemId);
+      
+      const response = await fetch(url, {
         method: 'DELETE',
-        body: JSON.stringify({ userId: currentUser.id.toString() })
+        headers: { 'Content-Type': 'application/json' }
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const text = await response.text(); // Returns "Item removed from cart"
+      environment.log('Remove from cart response:', text);
+      
+      // Also update local storage for consistency
+      this.removeFromLocalCart(itemId);
+      
+      return { success: true, message: text };
     } catch (error) {
-      environment.warn('Remove from cart endpoint not implemented, using local storage');
+      environment.warn('Remove from cart backend error, using local storage:', error);
       return this.removeFromLocalCart(itemId);
     }
   }
@@ -253,12 +383,24 @@ class ApiService {
     }
 
     try {
-      return await this.request('/cart', {
-        method: 'DELETE',
-        body: JSON.stringify({ userId: currentUser.id.toString() })
+      // Spring CartController: DELETE /api/cart/clear/{userID}
+      const response = await fetch(`${this.baseURL}/cart/clear/${currentUser.username}`, {
+        method: 'DELETE'
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const text = await response.text(); // Returns "Cart cleared"
+      environment.log('Clear cart response:', text);
+      
+      // Also clear local storage for consistency
+      this.clearLocalCart();
+      
+      return { success: true, message: text };
     } catch (error) {
-      environment.warn('Clear cart endpoint not implemented, using local storage');
+      environment.warn('Clear cart backend error, using local storage:', error);
       return this.clearLocalCart();
     }
   }

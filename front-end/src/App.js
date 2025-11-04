@@ -51,23 +51,44 @@ function AppContent() {
         
         // Try to connect to backend and load products
         try {
+          console.log('🔄 Attempting to load products from backend...');
           const productsData = await apiService.getProducts();
-          setProducts(productsData);
-          setBackendAvailable(true);
+          console.log('📦 Backend response for products:', productsData);
           
-          // Check if user is already logged in via token
-          const token = localStorage.getItem('authToken');
-          if (token) {
-            const userData = await apiService.getCurrentUser();
-            setUser(userData);
+          // Only use backend data if we actually get products
+          if (productsData && productsData.length > 0) {
+            console.log('✅ Using backend products:', productsData.length, 'items found');
+            setProducts(productsData);
+            setBackendAvailable(true);
+            console.log('✅ Backend connected: Loaded', productsData.length, 'products');
+          } else {
+            // Backend responded but no products - keep sample products
+            console.warn('⚠️ Backend responded but returned no/empty products:', productsData);
+            console.warn('⚠️ Keeping sample data instead');
+            setBackendAvailable(true);
+          }
+          
+          // Check if user is already logged in via currentUser storage (not token)
+          const currentUser = apiService.getCurrentUserData();
+          console.log('🔍 App startup - Retrieved user from localStorage:', currentUser);
+          console.log('🔍 User object type:', typeof currentUser);
+          console.log('🔍 User properties:', currentUser ? Object.keys(currentUser) : 'No user');
+          
+          if (currentUser) {
+            setUser(currentUser);
+            console.log('✅ User already logged in:', currentUser.username || currentUser.email || 'Unknown user');
             
-            // Load user's wishlist from backend
-            const userWishlist = await apiService.getWishlist();
-            setWishlist(userWishlist);
+            // Try to load user's wishlist from backend
+            try {
+              const userWishlist = await apiService.getWishlist();
+              setWishlist(userWishlist);
+            } catch (wishlistError) {
+              console.warn('Could not load wishlist from backend:', wishlistError);
+            }
           }
           
         } catch (backendError) {
-          console.warn('Backend not available, using localStorage fallback:', backendError);
+          console.warn('❌ Backend not available, using localStorage fallback:', backendError);
           setBackendAvailable(false);
           
           // Fallback to localStorage logic
@@ -213,11 +234,16 @@ function AppContent() {
   }
 
   async function handleLogin(userData) {
+    console.log('🔍 App handleLogin received userData:', userData);
+    console.log('🔍 userData type:', typeof userData);
+    console.log('🔍 userData properties:', userData ? Object.keys(userData) : 'No userData');
+    
     try {
       if (backendAvailable) {
         // userData should already include the token from Login component
         setUser(userData);
         localStorage.setItem('authToken', userData.token);
+        console.log('✅ Stored user in App state:', userData);
         
         // Load user's wishlist from backend
         const userWishlist = await apiService.getWishlist();
@@ -226,6 +252,7 @@ function AppContent() {
         // Fallback to localStorage
         setUser(userData);
         localStorage.setItem('currentUser', JSON.stringify(userData));
+        console.log('✅ Stored user in localStorage fallback:', userData);
       }
     } catch (error) {
       console.error('Error during login:', error);

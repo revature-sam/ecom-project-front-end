@@ -15,6 +15,35 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
   const [paymentMethod, setPaymentMethod] = useState('credit-card');
   const [shippingAddress, setShippingAddress] = useState('');
 
+  // Helper function to get the actual logged-in user (same as apiService uses)
+  function getLoggedInUser() {
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      try {
+        return JSON.parse(storedUser);
+      } catch (e) {
+        console.warn('Failed to parse stored user:', e);
+      }
+    }
+    return null;
+  }
+
+  // Helper function to safely get user identifier
+  function getUserId() {
+    // First try the actual logged-in user (same as cart operations use)
+    const loggedInUser = getLoggedInUser();
+    if (loggedInUser) {
+      return loggedInUser.username || loggedInUser.id || loggedInUser.userId || loggedInUser.email;
+    }
+
+    // Fallback to prop-based currentUser
+    if (currentUser) {
+      return currentUser.username || currentUser.id || currentUser.userId || currentUser.email;
+    }
+    
+    return 'anonymous';
+  }
+
   // Check if user is authenticated
   useEffect(() => {
     if (!currentUser) {
@@ -47,7 +76,8 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
 
     try {
       setIsLoading(true);
-      const summary = await apiService.getCheckoutSummary(currentUser.id.toString());
+      const userId = getUserId();
+      const summary = await apiService.getCheckoutSummary(userId);
       setCheckoutSummary(summary);
     } catch (error) {
       console.warn('Failed to load checkout summary from backend, using fallback calculation:', error);
@@ -84,7 +114,8 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
 
     try {
       setIsLoading(true);
-      const response = await apiService.applyDiscountCode(currentUser.id.toString(), code);
+      const userId = getUserId();
+      const response = await apiService.applyDiscountCode(userId, code);
       
       if (response.success) {
         setAppliedDiscount({
@@ -123,7 +154,8 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
 
   async function handleRemoveDiscount() {
     try {
-      await apiService.removeDiscountCode(currentUser.id.toString());
+      const userId = getUserId();
+      await apiService.removeDiscountCode(userId);
       setAppliedDiscount(null);
       setDiscountCode('');
       setDiscountError('');
@@ -145,7 +177,8 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
     setShippingMethod(method);
     
     try {
-      await apiService.selectShippingMethod(currentUser.id.toString(), method, shippingAddress);
+      const userId = getUserId();
+      await apiService.selectShippingMethod(userId, method, shippingAddress);
       await loadCheckoutSummary();
     } catch (error) {
       console.warn('Failed to update shipping method in backend:', error);
@@ -157,7 +190,8 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
     setPaymentMethod(method);
     
     try {
-      await apiService.selectPaymentMethod(currentUser.id.toString(), method);
+      const userId = getUserId();
+      await apiService.selectPaymentMethod(userId, method);
     } catch (error) {
       console.warn('Failed to update payment method in backend:', error);
     }
@@ -183,11 +217,70 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
       return;
     }
 
+    // Debug logging
+    const loggedInUser = getLoggedInUser();
+    console.log('🔍 Detailed User Analysis:', {
+      propCurrentUser: currentUser,
+      storedCurrentUser: loggedInUser,
+      getUserIdResult: getUserId(),
+      localStorageRaw: localStorage.getItem('currentUser'),
+      usingSameUser: getUserId() === (loggedInUser?.username || loggedInUser?.id)
+    });
+
+    console.log('🔍 Cart Analysis:', {
+      cartLength: cart.length,
+      cartItems: cart,
+      hasItems: cart && cart.length > 0
+    });
+
+    // Check if cart is empty on frontend
+    if (!cart || cart.length === 0) {
+      if (showNotification) {
+        showNotification('Your cart is empty. Please add items before checkout.', 'error');
+      }
+      return;
+    }
+
     try {
       setIsLoading(true);
 
-      // Validate checkout first
-      await apiService.validateCheckout(currentUser.id.toString());
+      const userId = getUserId();
+      
+      // Sync frontend cart with backend before validation
+      console.log('🔄 Syncing cart with backend for user:', userId);
+      try {
+        // Add each cart item to backend cart to ensure synchronization
+        for (const item of cart) {
+          console.log(`📦 Adding item ${item.id} (qty: ${item.quantity}) to backend cart`);
+          const addResult = await apiService.addToCart(item.id, item.quantity);
+          console.log(`✅ Item ${item.id} added result:`, addResult);
+        }
+        console.log('✅ Cart synchronized with backend');
+      } catch (syncError) {
+        console.warn('⚠️ Cart sync failed:', syncError);
+        console.log('🔍 Sync error details:', {
+          error: syncError.message,
+          userId: userId,
+          cartItems: cart.map(item => ({ id: item.id, quantity: item.quantity }))
+        });
+      }
+
+      // Validate checkout
+      try {
+        await apiService.validateCheckout(userId);
+        console.log('✅ Checkout validation passed');
+      } catch (validationError) {
+        console.warn('⚠️ Backend validation failed, proceeding with frontend validation:', validationError);
+        
+        // Frontend fallback validation
+        if (!cart || cart.length === 0) {
+          throw new Error('Cart is empty');
+        }
+        if (!userId || userId === 'anonymous') {
+          throw new Error('User not properly authenticated');
+        }
+        console.log('✅ Frontend validation passed');
+      }
 
       const orderData = {
         items: cart,
@@ -198,11 +291,11 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
         shipping: checkoutSummary?.shipping || 0,
         shippingMethod,
         paymentMethod,
-        userId: currentUser.id
+        userId: userId
       };
 
       // Submit order to backend
-      const response = await apiService.submitOrder(currentUser.id.toString(), orderData);
+      const response = await apiService.submitOrder(userId, orderData);
 
       if (response.success) {
         // Call the parent's order handler if provided

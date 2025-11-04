@@ -65,6 +65,32 @@ function WishlistItemCard({ item, onRemoveFromWishlist, onAddToCart }) {
 export default function Account({ user, onLogout, wishlist, onToggleWishlist, onAddToCart }) {
   const navigate = useNavigate();
 
+  // Debug logging to see what user object we received
+  console.log('🔍 Account component user object:', user);
+  console.log('🔍 User properties:', user ? Object.keys(user) : 'No user');
+
+  // Safety check for user object
+  if (!user) {
+    return (
+      <div className="account-page">
+        <div className="account-container">
+          <div className="account-header">
+            <button className="back-btn" onClick={() => navigate('/')}>
+              ← Back to Shopping
+            </button>
+            <h1>My Account</h1>
+          </div>
+          <div className="account-content">
+            <div className="info-card">
+              <p>No user information available. Please log in again.</p>
+              <button onClick={() => navigate('/login')}>Go to Login</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   function handleLogout() {
     onLogout();
     navigate('/');
@@ -98,15 +124,35 @@ export default function Account({ user, onLogout, wishlist, onToggleWishlist, on
               <div className="info-card">
                 <div className="info-item">
                   <label>Name</label>
-                  <span>{user.firstName} {user.lastName}</span>
+                  <span>
+                    {user.firstName && user.lastName 
+                      ? `${user.firstName} ${user.lastName}`
+                      : user.username || user.name || 'User'
+                    }
+                  </span>
+                </div>
+                <div className="info-item">
+                  <label>Username</label>
+                  <span>{user.username || user.email || 'N/A'}</span>
                 </div>
                 <div className="info-item">
                   <label>Email</label>
-                  <span>{user.email}</span>
+                  <span>{user.email || 'Not provided'}</span>
                 </div>
                 <div className="info-item">
                   <label>Member Since</label>
-                  <span>{new Date(user.id).toLocaleDateString()}</span>
+                  <span>
+                    {user.createdAt 
+                      ? new Date(user.createdAt).toLocaleDateString()
+                      : user.id
+                      ? new Date(user.id).toLocaleDateString()
+                      : 'Unknown'
+                    }
+                  </span>
+                </div>
+                <div className="info-item">
+                  <label>Account ID</label>
+                  <span>{user.id || user.userId || user.username || 'N/A'}</span>
                 </div>
               </div>
             </div>

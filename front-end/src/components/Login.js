@@ -90,12 +90,17 @@ export default function Login({ onLogin }) {
       } else {
         try {
           // Spring backend uses username/password login
-          userData = await apiService.login(formData.username, formData.password);
+          const loginResponse = await apiService.login(formData.username, formData.password);
+          console.log('🔍 Login component received response:', loginResponse);
           
-          if (userData) {
+          if (loginResponse && loginResponse.user) {
+            // Extract user from the response structure
+            userData = loginResponse.user;
+            console.log('✅ Extracted user data for App:', userData);
             onLogin(userData);
             navigate('/');
           } else {
+            console.log('❌ No user in login response:', loginResponse);
             setErrors({ username: 'Invalid username or password' });
           }
         } catch (apiError) {
