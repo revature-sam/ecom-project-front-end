@@ -222,7 +222,7 @@ function AppContent() {
     ? (() => {
         const q = query.trim().toLowerCase();
         const seen = new Set();
-        return sampleProducts
+        return products
           .filter((p) => p.name.toLowerCase().includes(q) && !seen.has(p.name) && (seen.add(p.name), true))
           .slice(0, 6)
           .map((p) => ({ name: p.name, image: p.image }));
