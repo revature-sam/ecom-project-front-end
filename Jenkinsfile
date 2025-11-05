@@ -6,7 +6,11 @@ pipeline {
         AWS_REGION = 'us-east-2'
         EXTERNAL_PORT = '8081'
         INTERNAL_PORT = '8080'
+<<<<<<< HEAD
         
+=======
+        CI = 'false';
+>>>>>>> 6cf998befc606f507592d693d344c49a3c0873cb
     }
     
     stages {
