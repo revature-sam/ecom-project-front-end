@@ -18,10 +18,9 @@ pipeline {
         
         stage('Build React Frontend') {
             steps {
-            {
                 sh 'npm install'
                 sh 'npm run build'
-            }
+                }   
         }
         
         stage('Deploy Frontend to S3') {
