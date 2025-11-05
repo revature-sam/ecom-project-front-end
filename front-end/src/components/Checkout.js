@@ -53,7 +53,7 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
     
     loadAvailableDiscounts();
     loadCheckoutSummary();
-  }, [currentUser, cart]);
+  }, [currentUser, cart, navigate, loadAvailableDiscounts, loadCheckoutSummary]);
 
   async function loadAvailableDiscounts() {
     try {
