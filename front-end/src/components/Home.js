@@ -1,6 +1,112 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ProductCard from './ProductCard';
 import FilterSidebar from './FilterSidebar';
+import './account.css'; // Import for modal styles
+
+// Item Details Modal Component
+function ItemDetailsModal({ item, onClose, onAddToCart, onToggleWishlist, isInWishlist, user, showNotification, isClosing }) {
+  const getPlaceholderIcon = (category) => {
+    switch (category?.toLowerCase()) {
+      case 'phones':
+        return '📱';
+      case 'laptops':
+        return '💻';
+      case 'accessories':
+        return '🔌';
+      case 'audio':
+        return '🎧';
+      default:
+        return '📦';
+    }
+  };
+
+  const handleWishlistClick = () => {
+    if (!user) {
+      showNotification('Please sign in to add items to your wishlist', 'warning');
+      return;
+    }
+    onToggleWishlist(item);
+    onClose(); // Close modal after wishlist action
+  };
+
+  const handleAddToCart = () => {
+    onAddToCart(item);
+    onClose(); // Close modal after adding to cart
+  };
+
+  return (
+    <div className={`modal-overlay ${isClosing ? 'closing' : ''}`} onClick={onClose}>
+      <div className={`modal-content ${isClosing ? 'closing' : ''}`} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>Product Details</h3>
+          <button 
+            className="close-btn"
+            onClick={onClose}
+            title="Close"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="modal-body">
+          <div className="item-details-content">
+            <div className="item-image-section">
+              {item.image ? (
+                <img 
+                  src={item.image} 
+                  alt={item.name}
+                  className="item-detail-image"
+                />
+              ) : (
+                <div className="item-detail-placeholder">
+                  <span className="placeholder-icon">{getPlaceholderIcon(item.category)}</span>
+                  <span className="placeholder-text">
+                    {getPlaceholderIcon(item.category) === '📦' ? 'OTHER' : (item.category || 'Product')}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="item-info-section">
+              <h2 className="item-detail-name">{item.name}</h2>
+              <p className="item-detail-category">Category: {item.category || 'Uncategorized'}</p>
+              <p className="item-detail-description">
+                {item.description || 'No description available'}
+              </p>
+              <p className="item-detail-stock">
+                Stock: <span className={item.stockQuantity === 0 ? 'out-of-stock' : 'in-stock'}>
+                  {item.stockQuantity !== undefined ? item.stockQuantity : 'N/A'}
+                </span>
+              </p>
+              <p className="item-detail-price">${item.price.toFixed(2)}</p>
+              
+              <div className="item-actions">
+                <button 
+                  className="btn-add-modal"
+                  onClick={handleAddToCart}
+                  disabled={item.stockQuantity === 0}
+                >
+                  {item.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                </button>
+                <button 
+                  className={`wishlist-btn-modal ${isInWishlist ? 'active' : ''} ${!user ? 'disabled' : ''}`}
+                  onClick={handleWishlistClick}
+                  title={
+                    !user 
+                      ? 'Sign in to add to wishlist' 
+                      : isInWishlist 
+                        ? 'Remove from wishlist' 
+                        : 'Add to wishlist'
+                  }
+                >
+                  {isInWishlist ? '★' : '☆'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Home({ 
   products = [], // Default to empty array to prevent errors
@@ -17,6 +123,22 @@ export default function Home({
   user,
   showNotification
 }) {
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleItemClick = (item) => {
+    setSelectedItem(item);
+    setIsClosing(false);
+  };
+
+  const handleCloseModal = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setSelectedItem(null);
+      setIsClosing(false);
+    }, 200); // Match the animation duration
+  };
+
   // Handle case where products might be null or undefined
   if (!products) {
     return (
@@ -88,6 +210,7 @@ export default function Home({
                 isInWishlist={wishlist.some(item => item.id === p.id)}
                 user={user}
                 showNotification={showNotification}
+                onClick={handleItemClick}
               />
             ))
           ) : (
@@ -98,6 +221,20 @@ export default function Home({
           )}
         </section>
       </div>
+
+      {/* Item Details Modal */}
+      {selectedItem && (
+        <ItemDetailsModal
+          item={selectedItem}
+          onClose={handleCloseModal}
+          onAddToCart={onAddToCart}
+          onToggleWishlist={onToggleWishlist}
+          isInWishlist={wishlist.some(item => item.id === selectedItem.id)}
+          user={user}
+          showNotification={showNotification}
+          isClosing={isClosing}
+        />
+      )}
     </main>
   );
 }

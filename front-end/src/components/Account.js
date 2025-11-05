@@ -286,6 +286,7 @@ function WishlistItemCard({ item, onRemoveFromWishlist, onAddToCart }) {
 
 function MyItemsSection({ user, onRefreshProducts, showNotification }) {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isClosingAddForm, setIsClosingAddForm] = useState(false);
   const [userItems, setUserItems] = useState([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const [itemsError, setItemsError] = useState(null);
@@ -327,7 +328,11 @@ function MyItemsSection({ user, onRefreshProducts, showNotification }) {
 
   const handleItemAdded = async (newItem) => {
     console.log('✅ New item added:', newItem);
-    setShowAddForm(false);
+    setIsClosingAddForm(true);
+    setTimeout(() => {
+      setShowAddForm(false);
+      setIsClosingAddForm(false);
+    }, 200);
     
     // Refresh the items list with user-specific items
     try {
@@ -381,10 +386,15 @@ function MyItemsSection({ user, onRefreshProducts, showNotification }) {
 
   const handleAddItemClick = () => {
     setShowAddForm(true);
+    setIsClosingAddForm(false);
   };
 
   const handleCancelAdd = () => {
-    setShowAddForm(false);
+    setIsClosingAddForm(true);
+    setTimeout(() => {
+      setShowAddForm(false);
+      setIsClosingAddForm(false);
+    }, 200); // Match the animation duration
   };
 
   return (
@@ -433,8 +443,8 @@ function MyItemsSection({ user, onRefreshProducts, showNotification }) {
 
       {/* Modal Popup for Add Item Form */}
       {showAddForm && (
-        <div className="modal-overlay" onClick={handleCancelAdd}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className={`modal-overlay ${isClosingAddForm ? 'closing' : ''}`} onClick={handleCancelAdd}>
+          <div className={`modal-content ${isClosingAddForm ? 'closing' : ''}`} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Add New Item to Store</h3>
               <button className="modal-close-btn" onClick={handleCancelAdd}>

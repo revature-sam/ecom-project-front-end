@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './productCard.css';
 
-export default function ProductCard({ product, onAdd, onToggleWishlist, isInWishlist, user, showNotification }) {
+export default function ProductCard({ product, onAdd, onToggleWishlist, isInWishlist, user, showNotification, onClick }) {
   const [imageError, setImageError] = useState(false);
 
   const getPlaceholderIcon = (category) => {
@@ -35,8 +35,14 @@ export default function ProductCard({ product, onAdd, onToggleWishlist, isInWish
     onToggleWishlist(product);
   };
 
+  const handleCardClick = () => {
+    if (onClick) {
+      onClick(product);
+    }
+  };
+
   return (
-    <div className="product-card">
+    <div className="product-card" onClick={handleCardClick}>
       <div className="product-image-container">
         <button 
           className={`wishlist-btn ${isInWishlist ? 'active' : ''} ${!user ? 'disabled' : ''}`}
@@ -78,7 +84,10 @@ export default function ProductCard({ product, onAdd, onToggleWishlist, isInWish
         <p className="product-price">${product.price.toFixed(2)}</p>
         <button 
           className="btn-add" 
-          onClick={() => onAdd(product)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAdd(product);
+          }}
           disabled={product.stockQuantity === 0}
         >
           {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}

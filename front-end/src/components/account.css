@@ -991,6 +991,7 @@
   z-index: 1000;
   backdrop-filter: blur(4px);
   padding: 20px;
+  animation: modalFadeIn 0.3s ease-out;
 }
 
 .modal-content {
@@ -1002,6 +1003,8 @@
   max-height: 90vh;
   overflow-y: auto;
   border: 1px solid #4b5563;
+  animation: modalSlideIn 0.3s ease-out;
+  transform-origin: center;
 }
 
 .modal-header {
@@ -1073,6 +1076,243 @@
   
   .modal-header h3 {
     font-size: 1.1rem;
+  }
+}
+
+/* Item Details Modal Styles */
+.item-details-content {
+  display: flex;
+  gap: 24px;
+  flex-direction: row;
+}
+
+.item-image-section {
+  flex: 0 0 300px;
+}
+
+.item-detail-image {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #4b5563;
+}
+
+.item-detail-placeholder {
+  width: 100%;
+  height: 300px;
+  background: #374151;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #4b5563;
+}
+
+.item-detail-placeholder .placeholder-icon {
+  font-size: 4rem;
+  margin-bottom: 24px;
+}
+
+.item-detail-placeholder .placeholder-text {
+  color: #9ca3af;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.item-info-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.item-detail-name {
+  color: #f3f4f6;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.item-detail-category {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+.item-detail-description {
+  color: #d1d5db;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.item-detail-stock {
+  color: #9ca3af;
+  font-weight: 500;
+  margin: 0;
+}
+
+.item-detail-stock .in-stock {
+  color: #10b981;
+}
+
+.item-detail-stock .out-of-stock {
+  color: #ef4444;
+}
+
+.item-detail-price {
+  color: #f3f4f6;
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.item-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.btn-add-modal {
+  flex: 1;
+  padding: 12px 16px;
+  background: linear-gradient(to bottom, #16a34a, #15803d);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.btn-add-modal:hover {
+  opacity: 0.95;
+}
+
+.btn-add-modal:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-add-modal:disabled:hover {
+  opacity: 0.6;
+}
+
+.wishlist-btn-modal {
+  width: 48px;
+  height: 48px;
+  border: 2px solid #6b7280;
+  background: transparent;
+  color: #9ca3af;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.wishlist-btn-modal:hover {
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.wishlist-btn-modal.active {
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.wishlist-btn-modal.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wishlist-btn-modal.disabled:hover {
+  border-color: #6b7280;
+  color: #9ca3af;
+}
+
+/* Responsive modal adjustments for item details */
+@media (max-width: 768px) {
+  .item-details-content {
+    flex-direction: column;
+  }
+  
+  .item-image-section {
+    flex: none;
+  }
+  
+  .item-detail-image,
+  .item-detail-placeholder {
+    height: 200px;
+  }
+  
+  .item-actions {
+    flex-direction: column;
+  }
+  
+  .wishlist-btn-modal {
+    width: 100%;
+    height: 48px;
+  }
+}
+
+/* Modal Animation Keyframes */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Modal exit animations for smoother closing */
+.modal-overlay.closing {
+  animation: modalFadeOut 0.2s ease-in forwards;
+}
+
+.modal-content.closing {
+  animation: modalSlideOut 0.2s ease-in forwards;
+}
+
+@keyframes modalFadeOut {
+  from {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+}
+
+@keyframes modalSlideOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
   }
 }
 
