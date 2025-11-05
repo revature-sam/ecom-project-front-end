@@ -622,6 +622,7 @@ function AppContent() {
                   products={products}
                   onAddToCart={handleAdd}
                   query={query}
+                  onQueryChange={setQuery}
                   selectedCategory={selectedCategory}
                   onSelectCategory={setSelectedCategory}
                   priceRange={priceRange}

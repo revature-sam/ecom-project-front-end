@@ -112,6 +112,7 @@ export default function Home({
   products = [], // Default to empty array to prevent errors
   onAddToCart, 
   query, 
+  onQueryChange,
   selectedCategory, 
   onSelectCategory,
   priceRange,
@@ -197,6 +198,7 @@ export default function Home({
           onPriceRangeChange={onPriceRangeChange}
           sortBy={sortBy}
           onSortChange={onSortChange}
+          onQueryChange={onQueryChange}
         />
 
         <section className="products">

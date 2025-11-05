@@ -8,7 +8,8 @@ export default function FilterSidebar({
   priceRange,
   onPriceRangeChange,
   sortBy,
-  onSortChange
+  onSortChange,
+  onQueryChange
 }) {
   const handleMinPriceChange = (e) => {
     const newMin = parseFloat(e.target.value) || 0;
@@ -29,6 +30,7 @@ export default function FilterSidebar({
     onSelectCategory('All');
     onPriceRangeChange([0, 1500]);
     onSortChange('name');
+    onQueryChange(''); // Clear the search query
   };
 
   return (
