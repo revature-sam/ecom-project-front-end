@@ -670,7 +670,7 @@ function AppContent() {
           />
         </Routes>
 
-        {isHomePage && (
+        {(isHomePage || location.pathname === '/account') && (
           <>
             <Cart 
               items={cart} 
