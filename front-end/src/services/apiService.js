@@ -59,8 +59,27 @@ class ApiService {
       }
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || errorData.message || `HTTP error! status: ${response.status}`);
+        let errorData = {};
+        try {
+          const errorText = await response.text();
+          console.log('🔍 Error response text:', errorText);
+          
+          if (errorText) {
+            try {
+              errorData = JSON.parse(errorText);
+              console.log('📊 Parsed error data:', errorData);
+            } catch (parseError) {
+              console.log('⚠️ Error response is not JSON:', errorText);
+              errorData = { message: errorText };
+            }
+          }
+        } catch (textError) {
+          console.error('❌ Failed to read error response:', textError);
+        }
+        
+        const errorMessage = errorData.error || errorData.message || `HTTP error! status: ${response.status}`;
+        console.log('❌ Throwing error:', errorMessage);
+        throw new Error(errorMessage);
       }
 
       // Handle empty responses
@@ -655,26 +674,63 @@ class ApiService {
     });
     
     try {
-      const response = await this.request(`/checkout/submit/${userId}`, {
+      // First, try with the original format
+      let response = await this.request(`/checkout/submit/${userId}`, {
         method: 'POST',
         body: JSON.stringify(orderData)
       });
       console.log('✅ Order submitted successfully:', response);
-      
       return response;
+      
     } catch (error) {
-      console.error('❌ Backend order submission failed:', error);
+      console.error('❌ Initial order submission failed, trying alternative format:', error);
       
-      // Enhanced error logging
-      console.log('🔍 Order submission error details:', {
-        error: error.message,
-        userId,
-        orderDataKeys: Object.keys(orderData),
-        orderDataSize: JSON.stringify(orderData).length
-      });
-      
-      // Don't save to localStorage - let the error propagate
-      throw error;
+      // Try with alternative format that might match backend expectations
+      try {
+        const alternativeOrderData = {
+          userId: userId,
+          items: orderData.items.map(item => ({
+            productId: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            category: item.category || 'Unknown'
+          })),
+          orderTotal: orderData.total,
+          subtotal: orderData.subtotal,
+          taxAmount: orderData.tax,
+          shippingCost: orderData.shipping,
+          discountAmount: orderData.discountAmount,
+          shippingMethod: orderData.shippingMethod,
+          paymentMethod: orderData.paymentMethod
+        };
+        
+        console.log('🔄 Trying alternative order format:', alternativeOrderData);
+        
+        const alternativeResponse = await this.request(`/checkout/submit/${userId}`, {
+          method: 'POST',
+          body: JSON.stringify(alternativeOrderData)
+        });
+        
+        console.log('✅ Order submitted successfully with alternative format:', alternativeResponse);
+        return alternativeResponse;
+        
+      } catch (alternativeError) {
+        console.error('❌ Alternative format also failed:', alternativeError);
+        
+        // Enhanced error logging for both attempts
+        console.log('🔍 Order submission error details:', {
+          originalError: error.message,
+          alternativeError: alternativeError.message,
+          userId,
+          orderDataKeys: Object.keys(orderData),
+          orderDataSize: JSON.stringify(orderData).length,
+          orderData: orderData // Log the full order data for debugging
+        });
+        
+        // Re-throw the original error with backend details
+        throw new Error(`Order submission failed: ${error.message}`);
+      }
     }
   }
 

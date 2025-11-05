@@ -272,15 +272,17 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
 
       const orderData = {
         items: cart,
-        total: checkoutSummary?.total || 0,
-        subtotal: checkoutSummary?.subtotal || 0,
-        discountAmount: checkoutSummary?.discountAmount || 0,
-        tax: checkoutSummary?.tax || 0,
-        shipping: checkoutSummary?.shipping || 0,
+        total: Math.round((checkoutSummary?.total || 0) * 100) / 100,
+        subtotal: Math.round((checkoutSummary?.subtotal || 0) * 100) / 100,
+        discountAmount: Math.round((checkoutSummary?.discountAmount || 0) * 100) / 100,
+        tax: Math.round((checkoutSummary?.tax || 0) * 100) / 100,
+        shipping: Math.round((checkoutSummary?.shipping || 0) * 100) / 100,
         shippingMethod,
         paymentMethod,
         userId: userId
       };
+
+      console.log('🔍 Complete order data being sent:', JSON.stringify(orderData, null, 2));
 
       // Submit order to backend
       try {
