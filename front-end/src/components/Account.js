@@ -237,7 +237,7 @@ function WishlistItemCard({ item, onRemoveFromWishlist, onAddToCart }) {
   return (
     <div className="wishlist-item">
       <div className="wishlist-item-image">
-        {!imageError ? (
+        {!imageError && item.image ? (
           <img 
             src={item.image} 
             alt={item.name}
@@ -246,7 +246,9 @@ function WishlistItemCard({ item, onRemoveFromWishlist, onAddToCart }) {
         ) : (
           <div className="wishlist-placeholder">
             <span className="wishlist-placeholder-icon">{getPlaceholderIcon(item.category)}</span>
-            <span className="wishlist-placeholder-text">{item.category || 'Product'}</span>
+            <span className="wishlist-placeholder-text">
+              {getPlaceholderIcon(item.category) === '📦' ? 'OTHER' : (item.category || 'Product')}
+            </span>
           </div>
         )}
         <button 
@@ -478,7 +480,7 @@ function UserItemCard({ item, onRemoveItem }) {
   return (
     <div className="wishlist-item">
       <div className="wishlist-item-image">
-        {!imageError ? (
+        {!imageError && (item.imageUrl || item.image) ? (
           <img 
             src={item.imageUrl || item.image} 
             alt={item.name}
@@ -487,7 +489,9 @@ function UserItemCard({ item, onRemoveItem }) {
         ) : (
           <div className="wishlist-placeholder">
             <span className="wishlist-placeholder-icon">{getPlaceholderIcon(item.category)}</span>
-            <span className="wishlist-placeholder-text">{item.category || 'Product'}</span>
+            <span className="wishlist-placeholder-text">
+              {getPlaceholderIcon(item.category) === '📦' ? 'OTHER' : (item.category || 'Product')}
+            </span>
           </div>
         )}
         <button 
@@ -686,27 +690,39 @@ export default function Account({ user, onLogout, wishlist, onToggleWishlist, on
                         </div>
                       </div>
                       <div className="order-items">
-                        {(order.items || order.orderItems || []).map((item, index) => (
-                          <div key={index} className="order-item">
-                            <img 
-                              src={item.image || item.itemImage || '/placeholder-image.jpg'} 
-                              alt={item.name || item.itemName} 
-                              className="item-image"
-                              onError={(e) => {
-                                e.target.src = '/placeholder-image.jpg';
-                              }}
-                            />
-                            <div className="item-details">
-                              <span className="item-name">{item.name || item.itemName || 'Unknown Item'}</span>
-                              <span className="item-quantity">
-                                Qty: {item.quantity || item.qty || 1}
+                        {(order.items || order.orderItems || []).map((item, index) => {
+                          const hasImage = item.image || item.itemImage;
+                          return (
+                            <div key={index} className="order-item">
+                              {hasImage ? (
+                                <img 
+                                  src={item.image || item.itemImage} 
+                                  alt={item.name || item.itemName} 
+                                  className="item-image"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                  }}
+                                />
+                              ) : null}
+                              <div 
+                                className="order-item-placeholder" 
+                                style={{ display: hasImage ? 'none' : 'flex' }}
+                              >
+                                <span className="placeholder-icon">📦</span>
+                              </div>
+                              <div className="item-details">
+                                <span className="item-name">{item.name || item.itemName || 'Unknown Item'}</span>
+                                <span className="item-quantity">
+                                  Qty: {item.quantity || item.qty || 1}
+                                </span>
+                              </div>
+                              <span className="item-price">
+                                ${((item.price || item.itemPrice || 0) * (item.quantity || item.qty || 1)).toFixed(2)}
                               </span>
                             </div>
-                            <span className="item-price">
-                              ${((item.price || item.itemPrice || 0) * (item.quantity || item.qty || 1)).toFixed(2)}
-                            </span>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   ))}

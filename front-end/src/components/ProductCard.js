@@ -50,7 +50,7 @@ export default function ProductCard({ product, onAdd, onToggleWishlist, isInWish
           }
         >
         </button>
-        {!imageError ? (
+        {!imageError && product.image ? (
           <img 
             className="product-image" 
             src={product.image}
@@ -60,7 +60,9 @@ export default function ProductCard({ product, onAdd, onToggleWishlist, isInWish
         ) : (
           <div className="product-placeholder">
             <span className="placeholder-icon">{getPlaceholderIcon(product.category)}</span>
-            <span className="placeholder-text">{product.category || 'Product'}</span>
+            <span className="placeholder-text">
+              {getPlaceholderIcon(product.category) === '📦' ? 'OTHER' : (product.category || 'Product')}
+            </span>
           </div>
         )}
       </div>

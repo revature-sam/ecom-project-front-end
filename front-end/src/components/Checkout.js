@@ -365,7 +365,23 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
             <div className="items-list">
               {cart.map(item => (
                 <div key={item.id} className="checkout-item">
-                  <img src={item.image} alt={item.name} className="item-image" />
+                  {item.image ? (
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
+                      className="item-image"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className="checkout-item-placeholder" 
+                    style={{ display: item.image ? 'none' : 'flex' }}
+                  >
+                    <span className="placeholder-icon">📦</span>
+                  </div>
                   <div className="item-details">
                     <h3 className="item-name">{item.name}</h3>
                     <p className="item-price">${(parseFloat(item.price) || 0).toFixed(2)}</p>

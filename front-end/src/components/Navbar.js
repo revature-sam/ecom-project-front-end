@@ -18,7 +18,29 @@ export default function Navbar({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [imageErrors, setImageErrors] = useState({});
   const containerRef = useRef(null);
+
+  const getPlaceholderForCategory = (productName) => {
+    const name = productName.toLowerCase();
+    if (name.includes('phone') || name.includes('mobile')) return '📱';
+    if (name.includes('laptop') || name.includes('computer')) return '💻';
+    if (name.includes('headphone') || name.includes('earphone')) return '🎧';
+    if (name.includes('tv') || name.includes('television')) return '📺';
+    if (name.includes('watch') || name.includes('smart watch')) return '⌚';
+    if (name.includes('camera')) return '📷';
+    if (name.includes('speaker') || name.includes('audio')) return '🔊';
+    if (name.includes('tablet')) return '📱';
+    if (name.includes('charger') || name.includes('cable')) return '🔌';
+    return '📦';
+  };
+
+  const handleImageError = (productName) => {
+    setImageErrors(prev => ({
+      ...prev,
+      [productName]: true
+    }));
+  };
 
   useEffect(() => {
     setActiveIndex(-1);
@@ -132,7 +154,18 @@ export default function Navbar({
                   role="option"
                   aria-selected={idx === activeIndex}
                 >
-                  <img src={s.image} alt={s.name} className="suggestion-img" />
+                  {!imageErrors[s.name] && s.image ? (
+                    <img 
+                      src={s.image} 
+                      alt={s.name} 
+                      className="suggestion-img"
+                      onError={() => handleImageError(s.name)}
+                    />
+                  ) : (
+                    <div className="suggestion-placeholder">
+                      {getPlaceholderForCategory(s.name)}
+                    </div>
+                  )}
                   <span className="suggestion-text">{s.name}</span>
                 </li>
               ))}
@@ -162,7 +195,18 @@ export default function Navbar({
                   role="option"
                   aria-selected={idx === activeIndex}
                 >
-                  <img src={s.image} alt={s.name} className="suggestion-img" />
+                  {!imageErrors[s.name] && s.image ? (
+                    <img 
+                      src={s.image} 
+                      alt={s.name} 
+                      className="suggestion-img"
+                      onError={() => handleImageError(s.name)}
+                    />
+                  ) : (
+                    <div className="suggestion-placeholder">
+                      {getPlaceholderForCategory(s.name)}
+                    </div>
+                  )}
                   <span className="suggestion-text">{s.name}</span>
                 </li>
               ))}

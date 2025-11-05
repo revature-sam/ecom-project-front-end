@@ -165,6 +165,17 @@
   border-radius: 4px;
 }
 
+.order-item-placeholder {
+  width: 60px;
+  height: 45px;
+  background: #374151;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
 .item-details {
   display: flex;
   flex-direction: column;
