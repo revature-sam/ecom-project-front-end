@@ -1,5 +1,6 @@
 .cart {
-  @apply w-96 p-3 border-l border-dark-600 bg-dark-800 min-h-screen fixed -right-96 top-0 bottom-0 shadow-2xl transition-all duration-300 ease-out z-20;
+  @apply w-96 p-3 border-l border-dark-600 bg-dark-800 min-h-screen fixed -right-96 top-0 bottom-0 shadow-2xl transition-all duration-300 ease-out;
+  z-index: 1500; /* Higher than navbar (1000) but lower than search suggestions (10000) */
 }
 .cart.open { 
   @apply right-0;

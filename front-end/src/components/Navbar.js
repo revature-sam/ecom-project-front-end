@@ -17,12 +17,14 @@ export default function Navbar({
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(-1);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const containerRef = useRef(null);
 
   useEffect(() => {
     setActiveIndex(-1);
-    setShowSuggestions(suggestions.length > 0 && query.length > 0);
-  }, [suggestions, query]);
+    // Only show suggestions if input is focused, has suggestions, and has query
+    setShowSuggestions(isInputFocused && suggestions.length > 0 && query.length > 0);
+  }, [suggestions, query, isInputFocused]);
 
   // Handle clicking outside to close suggestions
   useEffect(() => {
@@ -30,6 +32,7 @@ export default function Navbar({
       if (containerRef.current && !containerRef.current.contains(event.target)) {
         setShowSuggestions(false);
         setActiveIndex(-1);
+        setIsInputFocused(false);
       }
     }
 
@@ -41,6 +44,7 @@ export default function Navbar({
     onSelectSuggestion(suggestionName);
     setShowSuggestions(false);
     setActiveIndex(-1);
+    setIsInputFocused(false);
   }
 
   function onKeyDown(e) {
@@ -65,30 +69,45 @@ export default function Navbar({
       }
       setShowSuggestions(false);
       setActiveIndex(-1);
+      setIsInputFocused(false);
       navigate('/');
     } else if (e.key === 'Escape') {
       setShowSuggestions(false);
       setActiveIndex(-1);
+      setIsInputFocused(false);
     }
   }
 
   function handleInputFocus() {
+    setIsInputFocused(true);
     if (suggestions.length > 0 && query.length > 0) {
       setShowSuggestions(true);
     }
+  }
+
+  function handleInputBlur() {
+    // Don't immediately hide suggestions on blur to allow clicking on them
+    // The clickOutside handler will take care of hiding them
+    setIsInputFocused(false);
   }
 
   function handleBrandClick() {
     onChange(''); // Clear search query
     setShowSuggestions(false); // Hide suggestions
     setActiveIndex(-1); // Reset active index
+    setIsInputFocused(false); // Reset focus state
     navigate('/'); // Navigate to home
   }
 
   return (
     <nav className="navbar">
       <button className="brand" onClick={handleBrandClick}>
-        E-commerce
+        <span className="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+          </svg>
+        </span>
+        ByteMart
       </button>
       {isHomePage ? (
         <div className="search-center" ref={containerRef}>
@@ -98,6 +117,7 @@ export default function Navbar({
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={onKeyDown}
             onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
             aria-autocomplete="list"
             aria-expanded={showSuggestions}
           />
@@ -127,6 +147,7 @@ export default function Navbar({
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={onKeyDown}
             onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
             aria-autocomplete="list"
             aria-expanded={showSuggestions}
           />

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './login.css';
+import apiService from '../services/apiService';
 
 export default function Login({ onLogin }) {
   const navigate = useNavigate();
   const [isRegister, setIsRegister] = useState(false);
   const [formData, setFormData] = useState({
+    username: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: ''
+    confirmPassword: ''
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -27,9 +27,13 @@ export default function Login({ onLogin }) {
   function validateForm() {
     const newErrors = {};
 
-    if (!formData.email) {
+    if (!formData.username) {
+      newErrors.username = 'Username is required';
+    }
+
+    if (isRegister && !formData.email) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (isRegister && !/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
 
@@ -40,12 +44,6 @@ export default function Login({ onLogin }) {
     }
 
     if (isRegister) {
-      if (!formData.firstName) {
-        newErrors.firstName = 'First name is required';
-      }
-      if (!formData.lastName) {
-        newErrors.lastName = 'Last name is required';
-      }
       if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = 'Passwords do not match';
       }
@@ -55,70 +53,140 @@ export default function Login({ onLogin }) {
     return Object.keys(newErrors).length === 0;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setErrors({});
 
-    // Simulate API call delay
-    setTimeout(() => {
-      // Get fresh user data from localStorage each time
-      const mockUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+    try {
+      // Try backend authentication first
+      let userData;
       
       if (isRegister) {
-        // Check if user already exists
-        const existingUser = mockUsers.find(user => user.email === formData.email);
-        if (existingUser) {
-          setErrors({ email: 'User with this email already exists' });
-          setIsLoading(false);
-          return;
+        try {
+          // Spring backend expects username, password, email
+          userData = await apiService.register(formData.username, formData.password, formData.email);
+          
+          if (userData) {
+            onLogin(userData);
+            navigate('/');
+          }
+        } catch (apiError) {
+          console.warn('Backend registration failed, using localStorage fallback:', apiError);
+          
+          // Handle specific API errors
+          if (apiError.message.includes('already exists')) {
+            setErrors({ username: 'User with this username already exists' });
+            setIsLoading(false);
+            return;
+          }
+          
+          // Fallback to localStorage registration
+          await handleLocalStorageRegistration();
         }
-
-        // Register new user
-        const newUser = {
-          id: Date.now(),
-          email: formData.email,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          password: formData.password, // In real app, this would be hashed
-          orders: []
-        };
-
-        const updatedUsers = [...mockUsers, newUser];
-        localStorage.setItem('mockUsers', JSON.stringify(updatedUsers));
-        
-        // Auto-login after registration
-        const userForSession = { ...newUser };
-        delete userForSession.password; // Don't store password in session
-        onLogin(userForSession);
-        
-        navigate('/');
       } else {
-        // Login existing user
-        const user = mockUsers.find(u => u.email === formData.email && u.password === formData.password);
-        if (user) {
-          const userForSession = { ...user };
-          delete userForSession.password; // Don't store password in session
-          onLogin(userForSession);
-          navigate('/');
-        } else {
-          setErrors({ email: 'Invalid email or password' });
+        try {
+          // Spring backend uses username/password login
+          const loginResponse = await apiService.login(formData.username, formData.password);
+          console.log('🔍 Login component received response:', loginResponse);
+          
+          if (loginResponse && loginResponse.user) {
+            // Extract user from the response structure
+            userData = loginResponse.user;
+            console.log('✅ Extracted user data for App:', userData);
+            onLogin(userData);
+            navigate('/');
+          } else {
+            console.log('❌ No user in login response:', loginResponse);
+            setErrors({ username: 'Invalid username or password' });
+          }
+        } catch (apiError) {
+          console.warn('Backend login failed, using localStorage fallback:', apiError);
+          
+          // Handle specific API errors
+          if (apiError.message.includes('Invalid') || apiError.message.includes('credentials')) {
+            setErrors({ username: 'Invalid username or password' });
+            setIsLoading(false);
+            return;
+          }
+          
+          // Fallback to localStorage login
+          await handleLocalStorageLogin();
         }
       }
+    } catch (error) {
+      console.error('Login/Registration error:', error);
+      setErrors({ general: 'An unexpected error occurred. Please try again.' });
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
+  }
+
+  async function handleLocalStorageRegistration() {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const mockUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+    
+    // Check if user already exists
+    const existingUser = mockUsers.find(user => 
+      user.username === formData.username || user.email === formData.email
+    );
+    if (existingUser) {
+      setErrors({ username: 'User with this username or email already exists' });
+      return;
+    }
+
+    // Register new user - match Spring backend User model
+    const newUser = {
+      id: Date.now(),
+      username: formData.username,
+      email: formData.email,
+      password: formData.password, // In real app, this would be hashed
+      orders: []
+    };
+
+    const updatedUsers = [...mockUsers, newUser];
+    localStorage.setItem('mockUsers', JSON.stringify(updatedUsers));
+    
+    // Auto-login after registration
+    const userForSession = { ...newUser };
+    delete userForSession.password; // Don't store password in session
+    onLogin(userForSession);
+    
+    navigate('/');
+  }
+
+  async function handleLocalStorageLogin() {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const mockUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+    
+    // Login existing user - match Spring backend login pattern
+    const user = mockUsers.find(u => 
+      u.username === formData.username && u.password === formData.password
+    );
+    if (user) {
+      const userForSession = { ...user };
+      delete userForSession.password; // Don't store password in session
+      onLogin(userForSession);
+      navigate('/');
+    } else {
+      setErrors({ username: 'Invalid username or password' });
+    }
   }
 
   function toggleMode() {
     setIsRegister(!isRegister);
     setFormData({
+      username: '',
       email: '',
       password: '',
-      confirmPassword: '',
-      firstName: '',
-      lastName: ''
+      confirmPassword: ''
     });
     setErrors({});
   }
@@ -135,44 +203,33 @@ export default function Login({ onLogin }) {
           <h1>{isRegister ? 'Create Account' : 'Sign In'}</h1>
           
           <form onSubmit={handleSubmit} className="login-form">
+            <div className="form-group">
+              <label>Username</label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                className={errors.username ? 'error' : ''}
+                placeholder="Enter your username"
+              />
+              {errors.username && <span className="error-text">{errors.username}</span>}
+            </div>
+
             {isRegister && (
-              <div className="form-row">
-                <div className="form-group">
-                  <label>First Name</label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    className={errors.firstName ? 'error' : ''}
-                  />
-                  {errors.firstName && <span className="error-text">{errors.firstName}</span>}
-                </div>
-                <div className="form-group">
-                  <label>Last Name</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    className={errors.lastName ? 'error' : ''}
-                  />
-                  {errors.lastName && <span className="error-text">{errors.lastName}</span>}
-                </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={errors.email ? 'error' : ''}
+                  placeholder="Enter your email"
+                />
+                {errors.email && <span className="error-text">{errors.email}</span>}
               </div>
             )}
-            
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className={errors.email ? 'error' : ''}
-              />
-              {errors.email && <span className="error-text">{errors.email}</span>}
-            </div>
 
             <div className="form-group">
               <label>Password</label>
@@ -182,6 +239,7 @@ export default function Login({ onLogin }) {
                 value={formData.password}
                 onChange={handleInputChange}
                 className={errors.password ? 'error' : ''}
+                placeholder="Enter your password"
               />
               {errors.password && <span className="error-text">{errors.password}</span>}
             </div>
@@ -197,6 +255,12 @@ export default function Login({ onLogin }) {
                   className={errors.confirmPassword ? 'error' : ''}
                 />
                 {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
+              </div>
+            )}
+
+            {errors.general && (
+              <div className="form-group">
+                <span className="error-text">{errors.general}</span>
               </div>
             )}
 
