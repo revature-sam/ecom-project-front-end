@@ -80,7 +80,7 @@ export default function ProductCard({ product, onAdd, onToggleWishlist, isInWish
           onClick={() => onAdd(product)}
           disabled={product.stockQuantity === 0}
         >
-          {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to cart'}
+          {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
         </button>
       </div>
     </div>

@@ -605,8 +605,8 @@
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
 }
 
 .form-group input.error,
@@ -651,7 +651,7 @@
 }
 
 .submit-btn {
-  background: #3b82f6;
+  background: #16a34a;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -664,7 +664,7 @@
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #2563eb;
+  background: #15803d;
 }
 
 .submit-btn:disabled {
@@ -709,7 +709,7 @@
 }
 
 .add-item-btn {
-  background: #3b82f6;
+  background: #16a34a;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -721,7 +721,7 @@
 }
 
 .add-item-btn:hover {
-  background: #2563eb;
+  background: #15803d;
 }
 
 .add-item-form-container {
@@ -874,7 +874,7 @@
 
 .user-item-price {
   margin: 0;
-  color: #3b82f6;
+  color: #16a34a;
   font-size: 1.1rem;
   font-weight: 600;
 }
@@ -903,7 +903,7 @@
 }
 
 .add-first-item-btn {
-  background: #3b82f6;
+  background: #16a34a;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -915,7 +915,7 @@
 }
 
 .add-first-item-btn:hover {
-  background: #2563eb;
+  background: #15803d;
 }
 
 /* Responsive adjustments for my items section */

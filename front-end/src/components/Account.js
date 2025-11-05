@@ -269,7 +269,7 @@ function WishlistItemCard({ item, onRemoveFromWishlist, onAddToCart }) {
           className="add-to-cart-btn"
           onClick={() => onAddToCart(item)}
         >
-          Add to cart
+          Add to Cart
         </button>
       </div>
     </div>
