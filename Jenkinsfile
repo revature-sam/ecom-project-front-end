@@ -6,6 +6,7 @@ pipeline {
         AWS_REGION = 'us-east-2'
         EXTERNAL_PORT = '8081'
         INTERNAL_PORT = '8080'
+        
     }
     
     stages {
@@ -27,7 +28,9 @@ pipeline {
         
         stage('Deploy Frontend to S3') {
             steps {
-                sh 'aws s3 sync . s3://${S3_BUCKET}/ --delete --region ${AWS_REGION}'
+                dir('front-end/dist') {
+                    sh 'aws s3 sync . s3://${S3_BUCKET}/ --delete --region ${AWS_REGION}'
+                }
             }
         }
     }
