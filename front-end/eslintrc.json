@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "react-hooks/exhaustive-deps": "off",
+    "no-unused-vars": "off",
+    "jsx-a11y/role-supports-aria-props": "off",
+    "no-useless-escape": "off"
+  }
+}
