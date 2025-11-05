@@ -661,6 +661,7 @@ function AppContent() {
                   onToggleWishlist={handleToggleWishlist}
                   onAddToCart={handleAdd}
                   onRefreshProducts={handleRefreshProducts}
+                  showNotification={showNotification}
                 />
               ) : (
                 <Login onLogin={handleLogin} />

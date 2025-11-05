@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import apiService from '../services/apiService';
 import './account.css';
 
-function AddItemForm({ onItemAdded }) {
+function AddItemForm({ onItemAdded, showNotification }) {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -14,7 +14,6 @@ function AddItemForm({ onItemAdded }) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
-  const [successMessage, setSuccessMessage] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -22,10 +21,6 @@ function AddItemForm({ onItemAdded }) {
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-    // Clear success message when user starts editing
-    if (successMessage) {
-      setSuccessMessage('');
     }
   };
 
@@ -76,7 +71,10 @@ function AddItemForm({ onItemAdded }) {
 
       const createdItem = await apiService.createItem(itemData);
       
-      setSuccessMessage('Item added successfully to the store!');
+      if (showNotification) {
+        showNotification('Item added successfully to the store!', 'success');
+      }
+      
       setFormData({
         name: '',
         description: '',
@@ -100,22 +98,14 @@ function AddItemForm({ onItemAdded }) {
   };
 
   return (
-    <div className="add-item-section">
-      <h2>Add New Item to Store</h2>
-      <div className="add-item-card">
-        {successMessage && (
-          <div className="success-message">
-            ✅ {successMessage}
-          </div>
-        )}
-        
-        {errors.submit && (
-          <div className="error-message">
-            ❌ {errors.submit}
-          </div>
-        )}
+    <div className="add-item-form-modal">
+      {errors.submit && (
+        <div className="error-message">
+          ❌ {errors.submit}
+        </div>
+      )}
 
-        <form onSubmit={handleSubmit} className="add-item-form">
+      <form onSubmit={handleSubmit} className="add-item-form">
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="name">Item Name *</label>
@@ -214,7 +204,6 @@ function AddItemForm({ onItemAdded }) {
             {isSubmitting ? 'Adding Item...' : 'Add Item to Store'}
           </button>
         </form>
-      </div>
     </div>
   );
 }
@@ -287,7 +276,7 @@ function WishlistItemCard({ item, onRemoveFromWishlist, onAddToCart }) {
   );
 }
 
-function MyItemsSection({ user, onRefreshProducts }) {
+function MyItemsSection({ user, onRefreshProducts, showNotification }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [userItems, setUserItems] = useState([]);
   const [loadingItems, setLoadingItems] = useState(true);
@@ -347,6 +336,41 @@ function MyItemsSection({ user, onRefreshProducts }) {
     }
   };
 
+  const handleRemoveItem = async (item) => {
+    try {
+      console.log('🗑️ Removing item:', item);
+      await apiService.deleteItem(item.id);
+      
+      // Update the local state by removing the deleted item
+      setUserItems(prevItems => prevItems.filter(i => i.id !== item.id));
+      
+      // Also refresh the main products list so the home page reflects the removal
+      if (onRefreshProducts) {
+        await onRefreshProducts();
+        console.log('🔄 Main products list refreshed after item removal');
+      }
+      
+      console.log('✅ Item removed successfully');
+    } catch (error) {
+      console.error('❌ Failed to remove item:', error);
+      
+      // Check if the error is because the item is in a wishlist
+      if (error.message && error.message.includes('ITEM_IN_WISHLIST')) {
+        if (showNotification) {
+          showNotification(`Cannot delete "${item.name}" - it's currently in someone's wishlist`, 'warning');
+        }
+      } else if (error.message && error.message.includes('ITEM_IN_ORDERS')) {
+        if (showNotification) {
+          showNotification(`Cannot delete "${item.name}" - it has been ordered by customers`, 'warning');
+        }
+      } else {
+        if (showNotification) {
+          showNotification('Failed to remove item. Please try again.', 'error');
+        }
+      }
+    }
+  };
+
   const handleAddItemClick = () => {
     setShowAddForm(true);
   };
@@ -359,63 +383,67 @@ function MyItemsSection({ user, onRefreshProducts }) {
     <div className="wishlist-section">
       <div className="my-items-header">
         <h2>My Store Items</h2>
-        {!showAddForm && (
-          <button className="add-item-btn" onClick={handleAddItemClick}>
-            Add Item
-          </button>
+        <button className="add-item-btn" onClick={handleAddItemClick}>
+          Add Item
+        </button>
+      </div>
+
+      <div className="items-display">
+        {loadingItems ? (
+          <div className="loading-items">
+            <p>Loading your items...</p>
+          </div>
+        ) : itemsError ? (
+          <div className="items-error">
+            <p>Error loading items: {itemsError}</p>
+            <button className="retry-btn" onClick={() => window.location.reload()}>
+              Retry
+            </button>
+          </div>
+        ) : userItems && userItems.length > 0 ? (
+          <div className="wishlist-grid">
+            {userItems.map((item) => (
+              <UserItemCard
+                key={item.id}
+                item={item}
+                onRemoveItem={handleRemoveItem}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="no-wishlist">
+            <div className="no-wishlist-content">
+              <h3>No items created yet</h3>
+              <p>Start by adding your first item to the store.</p>
+              <button className="shop-btn" onClick={handleAddItemClick}>
+                Add Your First Item
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
-      {showAddForm ? (
-        <div className="add-item-form-container">
-          <div className="add-item-form-header">
-            <h3>Add New Item to Store</h3>
-            <button className="cancel-btn" onClick={handleCancelAdd}>
-              Cancel
-            </button>
-          </div>
-          <AddItemForm onItemAdded={handleItemAdded} />
-        </div>
-      ) : (
-        <div className="items-display">
-          {loadingItems ? (
-            <div className="loading-items">
-              <p>Loading your items...</p>
-            </div>
-          ) : itemsError ? (
-            <div className="items-error">
-              <p>Error loading items: {itemsError}</p>
-              <button className="retry-btn" onClick={() => window.location.reload()}>
-                Retry
+      {/* Modal Popup for Add Item Form */}
+      {showAddForm && (
+        <div className="modal-overlay" onClick={handleCancelAdd}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Add New Item to Store</h3>
+              <button className="modal-close-btn" onClick={handleCancelAdd}>
+                ✕
               </button>
             </div>
-          ) : userItems && userItems.length > 0 ? (
-            <div className="wishlist-grid">
-              {userItems.map((item) => (
-                <UserItemCard
-                  key={item.id}
-                  item={item}
-                />
-              ))}
+            <div className="modal-body">
+              <AddItemForm onItemAdded={handleItemAdded} showNotification={showNotification} />
             </div>
-          ) : (
-            <div className="no-wishlist">
-              <div className="no-wishlist-content">
-                <h3>No items created yet</h3>
-                <p>Start by adding your first item to the store.</p>
-                <button className="shop-btn" onClick={handleAddItemClick}>
-                  Add Your First Item
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-function UserItemCard({ item }) {
+function UserItemCard({ item, onRemoveItem }) {
   const [imageError, setImageError] = useState(false);
 
   const getPlaceholderIcon = (category) => {
@@ -437,6 +465,12 @@ function UserItemCard({ item }) {
     setImageError(true);
   };
 
+  const handleRemoveClick = () => {
+    if (window.confirm(`Are you sure you want to remove "${item.name}" from your store?`)) {
+      onRemoveItem(item);
+    }
+  };
+
   return (
     <div className="wishlist-item">
       <div className="wishlist-item-image">
@@ -452,6 +486,13 @@ function UserItemCard({ item }) {
             <span className="wishlist-placeholder-text">{item.category || 'Product'}</span>
           </div>
         )}
+        <button 
+          className="remove-user-item-btn"
+          onClick={handleRemoveClick}
+          title="Remove item from store"
+        >
+          ✕
+        </button>
       </div>
       <div className="wishlist-item-details">
         <h3 className="wishlist-item-name" title={item.name}>{item.name}</h3>
@@ -470,7 +511,7 @@ function UserItemCard({ item }) {
   );
 }
 
-export default function Account({ user, onLogout, wishlist, onToggleWishlist, onAddToCart, onRefreshProducts }) {
+export default function Account({ user, onLogout, wishlist, onToggleWishlist, onAddToCart, onRefreshProducts, showNotification }) {
   const navigate = useNavigate();
   const [orderHistory, setOrderHistory] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -599,7 +640,7 @@ export default function Account({ user, onLogout, wishlist, onToggleWishlist, on
               )}
             </div>
 
-            <MyItemsSection user={user} onRefreshProducts={onRefreshProducts} />
+            <MyItemsSection user={user} onRefreshProducts={onRefreshProducts} showNotification={showNotification} />
           </div>
 
           <div className="right-column">

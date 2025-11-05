@@ -318,6 +318,22 @@ class ApiService {
     }
   }
 
+  async deleteItem(itemId) {
+    try {
+      console.log('🔄 Deleting item:', itemId);
+      const response = await this.request(`/items/${itemId}`, {
+        method: 'DELETE'
+      });
+      
+      console.log('✅ Item deleted successfully:', itemId);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to delete item:', error);
+      environment.error('Delete item error:', error);
+      throw error;
+    }
+  }
+
   async searchProducts(query, filters = {}) {
     // Backend doesn't have search implemented yet, filter locally
     try {
