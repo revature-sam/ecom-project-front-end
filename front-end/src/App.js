@@ -574,6 +574,10 @@ function AppContent() {
       } else {
         console.log('✅ Backend order submitted successfully');
         showNotification('Order placed successfully!', 'success');
+        
+        // Refresh products to show updated stock quantities
+        await handleRefreshProducts();
+        console.log('🔄 Product list refreshed to show updated stock quantities');
       }
 
       // Always clear cart after order attempt (successful or failed)
