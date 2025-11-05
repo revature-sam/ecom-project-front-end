@@ -718,25 +718,222 @@ class ApiService {
     });
   }
 
-  // Wishlist endpoints (not implemented in backend yet)
+  // Wishlist endpoints
   async getWishlist() {
-    environment.warn('Wishlist not implemented in backend');
-    return [];
+    try {
+      const currentUser = this.getCurrentUserData();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      const username = currentUser.username || currentUser.email || currentUser.id;
+      console.log('🌟 Fetching wishlist from backend for user:', username);
+      const response = await this.request(`/wishlist/user/${encodeURIComponent(username)}`);
+      
+      console.log('📦 Raw backend wishlist response:', response);
+      console.log('📦 Response type:', typeof response, 'Array?', Array.isArray(response));
+      
+      // Backend returns array of Wishlist objects, we need to extract the product data
+      const wishlistItems = Array.isArray(response) ? response : [];
+      console.log('📦 Extracted wishlist items:', wishlistItems);
+      console.log('✅ Wishlist fetched successfully:', wishlistItems.length, 'items');
+      
+      // Transform wishlist items to include product information
+      const transformedItems = wishlistItems.map(wishlistItem => {
+        // If the wishlist item has product information, use it
+        if (wishlistItem.product) {
+          return {
+            id: wishlistItem.product.id,
+            name: wishlistItem.product.name,
+            price: wishlistItem.product.price,
+            image: wishlistItem.product.image,
+            category: wishlistItem.product.category,
+            // Include wishlist-specific data
+            wishlistId: wishlistItem.id,
+            notes: wishlistItem.notes,
+            addedAt: wishlistItem.createdAt || wishlistItem.addedAt
+          };
+        }
+        // Fallback if product data is not included
+        return wishlistItem;
+      });
+      
+      return transformedItems;
+    } catch (error) {
+      console.error('❌ Failed to fetch wishlist from backend:', error);
+      throw error;
+    }
   }
 
-  async addToWishlist(productId) {
-    environment.warn('Add to wishlist not implemented in backend');
-    return { success: false, message: 'Not implemented' };
+  async addToWishlist(productId, notes = null) {
+    try {
+      const currentUser = this.getCurrentUserData();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      const username = currentUser.username || currentUser.email || currentUser.id;
+      console.log('🌟 Adding item to wishlist:', { productId, username, notes });
+      
+      const requestBody = notes ? { notes } : {};
+      const response = await this.request(`/wishlist/add/${encodeURIComponent(username)}/${productId}`, {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+      
+      console.log('✅ Item added to wishlist successfully');
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to add item to wishlist:', error);
+      throw error;
+    }
   }
 
   async removeFromWishlist(productId) {
-    environment.warn('Remove from wishlist not implemented in backend');
-    return { success: false, message: 'Not implemented' };
+    try {
+      const currentUser = this.getCurrentUserData();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      const username = currentUser.username || currentUser.email || currentUser.id;
+      console.log('🗑️ Removing item from wishlist:', { productId, username });
+      
+      const response = await this.request(`/wishlist/remove/${encodeURIComponent(username)}/${productId}`, {
+        method: 'DELETE'
+      });
+      
+      console.log('✅ Item removed from wishlist successfully');
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to remove item from wishlist:', error);
+      throw error;
+    }
   }
 
   async clearWishlist() {
-    environment.warn('Clear wishlist not implemented in backend');
-    return { success: false, message: 'Not implemented' };
+    try {
+      const currentUser = this.getCurrentUserData();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      const username = currentUser.username || currentUser.email || currentUser.id;
+      console.log('🗑️ Clearing entire wishlist for user:', username);
+      
+      const response = await this.request(`/wishlist/clear/${encodeURIComponent(username)}`, {
+        method: 'DELETE'
+      });
+      
+      console.log('✅ Wishlist cleared successfully');
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to clear wishlist:', error);
+      throw error;
+    }
+  }
+
+  async checkItemInWishlist(productId) {
+    try {
+      const currentUser = this.getCurrentUserData();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      const username = currentUser.username || currentUser.email || currentUser.id;
+      const response = await this.request(`/wishlist/check/${encodeURIComponent(username)}/${productId}`);
+      
+      return response.inWishlist || false;
+    } catch (error) {
+      console.error('❌ Failed to check item in wishlist:', error);
+      return false;
+    }
+  }
+
+  async getWishlistCount() {
+    try {
+      const currentUser = this.getCurrentUserData();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      const username = currentUser.username || currentUser.email || currentUser.id;
+      const response = await this.request(`/wishlist/count/${encodeURIComponent(username)}`);
+      
+      return response.count || 0;
+    } catch (error) {
+      console.error('❌ Failed to get wishlist count:', error);
+      return 0;
+    }
+  }
+
+  async toggleWishlistItem(productId, notes = null) {
+    try {
+      const currentUser = this.getCurrentUserData();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      const username = currentUser.username || currentUser.email || currentUser.id;
+      console.log('� Toggling wishlist item:', { productId, username, notes });
+      
+      const requestBody = notes ? { notes } : {};
+      const response = await this.request(`/wishlist/toggle/${encodeURIComponent(username)}/${productId}`, {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+      
+      console.log('✅ Wishlist item toggled successfully:', response.action);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to toggle wishlist item:', error);
+      throw error;
+    }
+  }
+
+  async moveWishlistItemToCart(productId) {
+    try {
+      const currentUser = this.getCurrentUserData();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      const username = currentUser.username || currentUser.email || currentUser.id;
+      console.log('🛒 Moving wishlist item to cart:', { productId, username });
+      
+      const response = await this.request(`/wishlist/move-to-cart/${encodeURIComponent(username)}/${productId}`, {
+        method: 'POST'
+      });
+      
+      console.log('✅ Item moved from wishlist to cart successfully');
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to move item to cart:', error);
+      throw error;
+    }
+  }
+
+  async updateWishlistItemNotes(productId, notes) {
+    try {
+      const currentUser = this.getCurrentUserData();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      const username = currentUser.username || currentUser.email || currentUser.id;
+      console.log('� Updating wishlist item notes:', { productId, username, notes });
+      
+      const response = await this.request(`/wishlist/update-notes/${encodeURIComponent(username)}/${productId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ notes })
+      });
+      
+      console.log('✅ Wishlist item notes updated successfully');
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to update wishlist item notes:', error);
+      throw error;
+    }
   }
 
   // Order endpoints - Order History functionality

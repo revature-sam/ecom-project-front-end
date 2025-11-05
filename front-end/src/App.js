@@ -107,11 +107,13 @@ function AppContent() {
             
             // Try to load user's wishlist from backend
             try {
-              const userWishlist = await apiService.getWishlist();
-              setWishlist(userWishlist);
-              console.log('✅ Wishlist loaded from backend');
+              console.log('🌟 Loading user wishlist from backend...');
+              await reloadWishlistFromBackend(currentUser);
             } catch (wishlistError) {
               console.warn('⚠️ Could not load wishlist from backend:', wishlistError);
+              // Start with empty wishlist if backend wishlist fails
+              setWishlist([]);
+              console.log('🌟 Starting with empty wishlist due to backend unavailable');
             }
           } else {
             console.log('❌ No user data found in localStorage during startup');
@@ -330,6 +332,59 @@ function AppContent() {
     }
   }
 
+  // Helper function to reload wishlist from backend
+  const reloadWishlistFromBackend = async (userToUse = null) => {
+    // Use provided user or current user state or get from localStorage
+    const activeUser = userToUse || user || apiService.getCurrentUserData();
+    
+    if (!activeUser) {
+      console.log('🌟 No user available for wishlist loading');
+      return;
+    }
+    
+    try {
+      console.log('🔄 Reloading wishlist from backend for user:', activeUser.username || activeUser.email);
+      const userWishlist = await apiService.getWishlist();
+      console.log('🌟 Raw wishlist response from backend:', userWishlist);
+      console.log('🌟 Wishlist type:', typeof userWishlist, 'Array?', Array.isArray(userWishlist));
+      
+      // Validate and transform wishlist items from backend format
+      const validWishlist = (userWishlist || []).filter(item => {
+        console.log('🔍 Validating wishlist item:', item);
+        // Check if this is a backend format with nested item structure
+        const productData = item.item || item;
+        const isValid = item && productData && productData.id && productData.name && 
+                      productData.price !== undefined && !isNaN(parseFloat(productData.price));
+        if (!isValid) {
+          console.warn('⚠️ Invalid wishlist item found:', item);
+        }
+        return isValid;
+      }).map(item => {
+        // Transform backend format to frontend format if needed
+        if (item.item) {
+          // Backend format: flatten the nested structure
+          return {
+            ...item.item,
+            wishlistId: item.id, // Keep the wishlist entry ID separate
+            addedDate: item.addedDate,
+            notes: item.notes
+          };
+        }
+        // Already in frontend format
+        return item;
+      });
+      
+      console.log('✅ Valid wishlist items:', validWishlist);
+      console.log('🔍 Sample transformed item:', validWishlist[0]); // Log first item structure
+      setWishlist(validWishlist);
+      console.log('✅ Wishlist reloaded successfully:', validWishlist.length, 'items');
+      return validWishlist;
+    } catch (error) {
+      console.error('❌ Failed to reload wishlist:', error);
+      return [];
+    }
+  };
+
   async function handleToggleWishlist(product) {
     if (!user) {
       showNotification('Please log in to manage your wishlist', 'warning');
@@ -337,31 +392,24 @@ function AppContent() {
     }
     
     try {
-      if (backendAvailable) {
-        const isInWishlist = wishlist.some(item => item.id === product.id);
-        if (isInWishlist) {
-          await apiService.removeFromWishlist(product.id);
-          setWishlist(current => current.filter(item => item.id !== product.id));
-          showNotification('Removed from wishlist', 'info');
-        } else {
-          await apiService.addToWishlist(product.id);
-          setWishlist(current => [...current, product]);
-          showNotification('Added to wishlist', 'success');
-        }
+      // Use backend toggle endpoint which handles add/remove automatically
+      console.log('🔄 Toggling wishlist item in backend:', product.id);
+      const response = await apiService.toggleWishlistItem(product.id);
+      
+      // Reload wishlist from backend to get the current state
+      await reloadWishlistFromBackend();
+      
+      // Show appropriate message based on backend response
+      if (response.action === 'added') {
+        showNotification('Added to wishlist', 'success');
+      } else if (response.action === 'removed') {
+        showNotification('Removed from wishlist', 'info');
       } else {
-        // Fallback to localStorage
-        setWishlist((current) => {
-          const isInWishlist = current.some(item => item.id === product.id);
-          if (isInWishlist) {
-            return current.filter(item => item.id !== product.id);
-          } else {
-            return [...current, product];
-          }
-        });
+        showNotification('Wishlist updated', 'success');
       }
     } catch (error) {
-      console.error('Error updating wishlist:', error);
-      showNotification('Failed to update wishlist', 'error');
+      console.error('❌ Failed to update wishlist:', error);
+      showNotification(`Failed to update wishlist. ${error.message}`, 'error');
     }
   }
 
@@ -423,10 +471,11 @@ function AppContent() {
           }
           
           try {
-            const userWishlist = await apiService.getWishlist();
-            setWishlist(userWishlist);
+            console.log('🌟 Loading user wishlist after login...');
+            await reloadWishlistFromBackend();
           } catch (wishlistError) {
-            console.warn('⚠️ Could not load wishlist:', wishlistError);
+            console.warn('⚠️ Could not load wishlist after login:', wishlistError);
+            setWishlist([]);
           }
         }, 100);
       } else {
