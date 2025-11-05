@@ -18,10 +18,9 @@ pipeline {
         
         stage('Build React Frontend') {
             steps {
-                dir('revagenda-client') {
-                    sh 'npm install'
-                    sh 'npm run build'
-                }
+            {
+                sh 'npm install'
+                sh 'npm run build'
             }
         }
         
