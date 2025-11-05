@@ -662,9 +662,11 @@ function AppContent() {
                   user={user} 
                   onLogout={handleLogout}
                   wishlist={wishlist}
+                  products={products}
                   onToggleWishlist={handleToggleWishlist}
                   onAddToCart={handleAdd}
                   onRefreshProducts={handleRefreshProducts}
+                  onRefreshWishlist={reloadWishlistFromBackend}
                   showNotification={showNotification}
                 />
               ) : (

@@ -449,6 +449,14 @@
   transform: translateY(0.125rem);
 }
 
+.add-to-cart-btn:disabled {
+  @apply bg-gray-600 cursor-not-allowed opacity-60;
+}
+
+.add-to-cart-btn:disabled:hover {
+  @apply opacity-60 transform-none;
+}
+
 .no-wishlist {
   text-align: center;
   padding: 40px 20px;

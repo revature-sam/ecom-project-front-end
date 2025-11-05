@@ -36,7 +36,15 @@ export default function Home({
   }
   // Apply all filters
   let filteredProducts = products
-    .filter((p) => selectedCategory === 'All' || p.category === selectedCategory)
+    .filter((p) => {
+      if (selectedCategory === 'All') return true;
+      if (selectedCategory === 'Other') {
+        // Show items that don't match any of the main categories
+        const mainCategories = ['Phones', 'Laptops', 'Accessories', 'Audio'];
+        return !mainCategories.includes(p.category);
+      }
+      return p.category === selectedCategory;
+    })
     .filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()))
     .filter((p) => p.price >= priceRange[0] && (priceRange[1] >= 1500 ? true : p.price <= priceRange[1]));
 
@@ -60,7 +68,7 @@ export default function Home({
 
       <div className="catalog-content">
         <FilterSidebar
-          categories={['All', 'Phones', 'Laptops', 'Accessories', 'Audio']}
+          categories={['All', 'Phones', 'Laptops', 'Accessories', 'Audio', 'Other']}
           selectedCategory={selectedCategory}
           onSelectCategory={onSelectCategory}
           priceRange={priceRange}

@@ -135,6 +135,7 @@ function AddItemForm({ onItemAdded, showNotification }) {
                 <option value="Laptops">Laptops</option>
                 <option value="Accessories">Accessories</option>
                 <option value="Audio">Audio</option>
+                <option value="Other">Other</option>
               </select>
               {errors.category && <span className="field-error">{errors.category}</span>}
             </div>
@@ -274,8 +275,9 @@ function WishlistItemCard({ item, onRemoveFromWishlist, onAddToCart }) {
         <button 
           className="add-to-cart-btn"
           onClick={() => onAddToCart(item)}
+          disabled={item.stockQuantity === 0}
         >
-          Add to Cart
+          {item.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
         </button>
       </div>
     </div>
@@ -388,7 +390,7 @@ function MyItemsSection({ user, onRefreshProducts, showNotification }) {
   return (
     <div className="wishlist-section">
       <div className="my-items-header">
-        <h2>My Store Items</h2>
+        <h2>My Items</h2>
         <button className="add-item-btn" onClick={handleAddItemClick}>
           Add Item
         </button>
@@ -519,11 +521,28 @@ function UserItemCard({ item, onRemoveItem }) {
   );
 }
 
-export default function Account({ user, onLogout, wishlist, onToggleWishlist, onAddToCart, onRefreshProducts, showNotification }) {
+export default function Account({ user, onLogout, wishlist, products, onToggleWishlist, onAddToCart, onRefreshProducts, onRefreshWishlist, showNotification }) {
   const navigate = useNavigate();
   const [orderHistory, setOrderHistory] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [orderError, setOrderError] = useState(null);
+
+  // Merge wishlist items with current product stock data
+  const wishlistWithCurrentStock = wishlist.map(wishlistItem => {
+    // Only merge if products array is available
+    if (products && products.length > 0) {
+      const currentProduct = products.find(p => p.id === wishlistItem.id);
+      if (currentProduct) {
+        // Use current stock from products data
+        return {
+          ...wishlistItem,
+          stockQuantity: currentProduct.stockQuantity
+        };
+      }
+    }
+    // Fallback to wishlist stock if product not found or products not loaded
+    return wishlistItem;
+  });
 
   // Debug logging to see what user object we received
   console.log('🔍 Account component user object:', user);
@@ -585,8 +604,16 @@ export default function Account({ user, onLogout, wishlist, onToggleWishlist, on
     navigate('/');
   }
 
-  function handleAddToCart(product) {
-    onAddToCart(product);
+  async function handleAddToCart(product) {
+    // First call the parent's onAddToCart function
+    await onAddToCart(product);
+    
+    // Then refresh both products and wishlist to get updated stock quantities
+    // Wait for both refreshes to complete
+    await Promise.all([
+      onRefreshProducts(),
+      onRefreshWishlist ? onRefreshWishlist() : Promise.resolve()
+    ]);
   }
 
   function handleRemoveFromWishlist(product) {
@@ -624,9 +651,9 @@ export default function Account({ user, onLogout, wishlist, onToggleWishlist, on
 
             <div className="wishlist-section">
               <h2>My Wishlist</h2>
-              {wishlist && wishlist.length > 0 ? (
+              {wishlistWithCurrentStock && wishlistWithCurrentStock.length > 0 ? (
                 <div className="wishlist-grid">
-                  {wishlist.map((item) => (
+                  {wishlistWithCurrentStock.map((item) => (
                     <WishlistItemCard
                       key={item.id}
                       item={item}
