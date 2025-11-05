@@ -192,7 +192,7 @@ function AppContent() {
     }
 
     initializeApp();
-  }, [reloadWishlistFromBackend]);
+  }, []);
 
   // Helper function to reload cart from backend
   const reloadCartFromBackend = async () => {
