@@ -279,7 +279,7 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  height: 332px;
+  height: 415px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -353,6 +353,7 @@
   flex-direction: column;
   gap: 8px;
   flex: 1;
+  justify-content: space-between;
 }
 
 .wishlist-item-name {
@@ -377,12 +378,19 @@
 }
 
 .wishlist-item-price {
-  margin: 0 0 12px 0;
+  margin: 0;
   color: #d1d5db;
   font-size: 1rem;
   font-weight: 600;
-  margin-top: auto;
-  margin-bottom: 8px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.wishlist-item-stock {
+  margin: 0 0 8px 0;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .add-to-cart-btn {
@@ -455,7 +463,7 @@
   
   .wishlist-item {
     width: 100%;
-    height: 300px;
+    min-height: 340px;
   }
   
   .wishlist-item-image {
@@ -489,4 +497,422 @@
 .fallback-indicator {
   @apply bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded text-xs font-medium;
   margin-left: 8px;
+}
+
+/* Stock badge for user items */
+.item-stock-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(59, 130, 246, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+/* Description for wishlist/user item cards */
+.wishlist-item-description {
+  margin: 8px 0;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Add Item Form Styles */
+.add-item-section {
+  margin-top: 30px;
+}
+
+.add-item-section h2 {
+  margin: 0 0 20px 0;
+  color: #f3f4f6;
+  font-size: 1.5rem;
+}
+
+.add-item-card {
+  background: #1f2937;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.add-item-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea {
+  background: #374151;
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #f3f4f6;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group input.error,
+.form-group textarea.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-help {
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.field-error {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.success-message {
+  background: #10b981;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.error-message {
+  background: #ef4444;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.submit-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  align-self: flex-start;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.submit-btn:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments for add item form */
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .add-item-card {
+    padding: 20px;
+  }
+}
+
+/* My Items Section Styles */
+.my-items-section {
+  margin-top: 30px;
+}
+
+.my-items-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.wishlist-section .my-items-header h2 {
+  margin: 0;
+  color: #f3f4f6;
+  font-size: 1.5rem;
+}
+
+.my-items-header .add-item-btn {
+  position: absolute;
+  right: 0;
+}
+
+.add-item-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-item-btn:hover {
+  background: #2563eb;
+}
+
+.add-item-form-container {
+  background: #1f2937;
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.add-item-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: #374151;
+  border-bottom: 1px solid #4b5563;
+}
+
+.add-item-form-header h3 {
+  margin: 0;
+  color: #f3f4f6;
+  font-size: 1.2rem;
+}
+
+.cancel-btn {
+  background: #6b7280;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #4b5563;
+}
+
+.items-display {
+  min-height: 200px;
+}
+
+.loading-items,
+.items-error {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.items-error {
+  color: #ef4444;
+}
+
+.retry-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.retry-btn:hover {
+  background: #dc2626;
+}
+
+.user-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.user-item-card {
+  background: #1f2937;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+}
+
+.user-item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+.user-item-image {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+}
+
+.user-item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-item-details {
+  padding: 16px;
+}
+
+.user-item-name {
+  margin: 0 0 8px 0;
+  color: #f3f4f6;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 2.2rem;
+}
+
+.user-item-description {
+  margin: 0 0 8px 0;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 2.2rem;
+}
+
+.user-item-category {
+  margin: 0 0 8px 0;
+  color: #6b7280;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.user-item-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.user-item-price {
+  margin: 0;
+  color: #3b82f6;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.user-item-stock {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.no-items {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.no-items-content h3 {
+  color: #f3f4f6;
+  margin: 0 0 12px 0;
+  font-size: 1.3rem;
+}
+
+.no-items-content p {
+  color: #9ca3af;
+  margin: 0 0 24px 0;
+  font-size: 1rem;
+}
+
+.add-first-item-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-first-item-btn:hover {
+  background: #2563eb;
+}
+
+/* Responsive adjustments for my items section */
+@media (max-width: 768px) {
+  .my-items-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    position: static;
+  }
+  
+  .my-items-header .add-item-btn {
+    position: static;
+    right: auto;
+  }
+  
+  .add-item-form-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
 }

@@ -22,7 +22,7 @@ class ApiService {
     const currentUser = this.getCurrentUserData();
     return {
       'Content-Type': 'application/json',
-      ...(currentUser && { 'X-User-ID': currentUser.id })
+      ...(currentUser && { 'X-User-ID': currentUser.id.toString() })
     };
   }
 
@@ -272,6 +272,49 @@ class ApiService {
     } catch (error) {
       environment.warn('Get sorted items error:', error);
       return [];
+    }
+  }
+
+  async createItem(itemData) {
+    try {
+      console.log('🔄 Creating new item:', itemData);
+      const response = await this.request('/items', {
+        method: 'POST',
+        body: JSON.stringify(itemData)
+      });
+      
+      if (response && response.item) {
+        console.log('✅ Item created successfully:', response.item);
+        return response.item;
+      } else if (response) {
+        console.log('✅ Item created:', response);
+        return response;
+      }
+      
+      throw new Error('Invalid response from server');
+    } catch (error) {
+      console.error('❌ Failed to create item:', error);
+      environment.error('Create item error:', error);
+      throw error;
+    }
+  }
+
+  async getUserItems(userId) {
+    try {
+      console.log('🔄 Fetching items for user:', userId);
+      console.log('🔄 Current user data:', this.getCurrentUserData());
+      console.log('🔄 Auth headers:', this.getAuthHeaders());
+      
+      const response = await this.request(`/users/${userId}/items`, {
+        method: 'GET'
+      });
+      
+      console.log('✅ User items loaded:', response);
+      return response || [];
+    } catch (error) {
+      console.error('❌ Failed to fetch user items:', error);
+      environment.error('Get user items error:', error);
+      throw error;
     }
   }
 

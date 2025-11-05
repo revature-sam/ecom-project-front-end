@@ -540,6 +540,22 @@ function AppContent() {
     }
   }
 
+  async function handleRefreshProducts() {
+    try {
+      console.log('🔄 Refreshing products list...');
+      const productsData = await apiService.getProducts();
+      
+      if (productsData && productsData.length > 0) {
+        setProducts(productsData);
+        console.log('✅ Products refreshed:', productsData.length, 'items loaded');
+      } else {
+        console.warn('⚠️ Refresh returned no products');
+      }
+    } catch (error) {
+      console.error('❌ Failed to refresh products:', error);
+    }
+  }
+
   async function handlePlaceOrder(orderData) {
     if (!user) {
       showNotification('Please log in to place an order', 'warning');
@@ -644,6 +660,7 @@ function AppContent() {
                   wishlist={wishlist}
                   onToggleWishlist={handleToggleWishlist}
                   onAddToCart={handleAdd}
+                  onRefreshProducts={handleRefreshProducts}
                 />
               ) : (
                 <Login onLogin={handleLogin} />

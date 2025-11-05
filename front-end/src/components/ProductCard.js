@@ -67,9 +67,21 @@ export default function ProductCard({ product, onAdd, onToggleWishlist, isInWish
       </div>
       <div className="product-body">
         <h3 className="product-title" title={product.name}>{product.name}</h3>
+        <p className="product-description" title={product.description}>
+          {product.description || 'No description available'}
+        </p>
+        <p className="product-stock">
+          Stock: {product.stockQuantity !== undefined ? product.stockQuantity : 'N/A'}
+        </p>
         <div className="product-divider"></div>
         <p className="product-price">${product.price.toFixed(2)}</p>
-        <button className="btn-add" onClick={() => onAdd(product)}>Add to cart</button>
+        <button 
+          className="btn-add" 
+          onClick={() => onAdd(product)}
+          disabled={product.stockQuantity === 0}
+        >
+          {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to cart'}
+        </button>
       </div>
     </div>
   );
