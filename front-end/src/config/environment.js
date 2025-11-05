@@ -2,8 +2,8 @@
 class EnvironmentConfig {
   constructor() {
     this.environment = process.env.REACT_APP_ENVIRONMENT || 'development';
-    this.apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
-    this.wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:8080/ws';
+    this.apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://trng2309-1.s3-website.us-east-2.amazonaws.com/api';
+    this.wsUrl = process.env.REACT_APP_WS_URL || 'ws://trng2309-1.s3-website.us-east-2.amazonaws.com/ws';
     this.isDebugEnabled = process.env.REACT_APP_DEBUG === 'true';
   }
 
