@@ -28,7 +28,7 @@ pipeline {
         
         stage('Deploy Frontend to S3') {
             steps {
-                dir('front-end/dist') {
+                dir('front-end/build') {
                     sh 'aws s3 sync . s3://${S3_BUCKET}/ --delete --region ${AWS_REGION}'
                 }
             }
