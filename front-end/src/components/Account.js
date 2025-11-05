@@ -123,15 +123,19 @@ function AddItemForm({ onItemAdded, showNotification }) {
 
             <div className="form-group">
               <label htmlFor="category">Category *</label>
-              <input
-                type="text"
+              <select
                 id="category"
                 name="category"
                 value={formData.category}
                 onChange={handleInputChange}
                 className={errors.category ? 'error' : ''}
-                placeholder="e.g., electronics, clothing, books"
-              />
+              >
+                <option value="">Select a category</option>
+                <option value="Phones">Phones</option>
+                <option value="Laptops">Laptops</option>
+                <option value="Accessories">Accessories</option>
+                <option value="Audio">Audio</option>
+              </select>
               {errors.category && <span className="field-error">{errors.category}</span>}
             </div>
           </div>

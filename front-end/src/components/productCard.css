@@ -11,11 +11,42 @@
   @apply h-36 relative flex-shrink-0;
 }
 .wishlist-btn {
-  @apply absolute top-2 right-2 w-8 h-8 bg-dark-800/80 hover:bg-dark-700 border-none rounded-full cursor-pointer flex items-center justify-center text-gray-400 hover:text-yellow-400 transition-all z-10 text-lg font-normal;
-  backdrop-filter: blur(4px);
+  @apply absolute top-2 right-2 w-8 h-8 border-none rounded-full cursor-pointer text-gray-400 hover:text-yellow-400 transition-all text-lg font-normal;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px) saturate(180%);
+  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  z-index: 10;
+  position: absolute;
+  isolation: isolate;
+  will-change: backdrop-filter;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.wishlist-btn::before {
+  content: '★';
+  transform: translateX(.5px) translateY(-1px);
+  display: block;
+}
+.wishlist-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px) saturate(200%);
+  -webkit-backdrop-filter: blur(10px) saturate(200%);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 .wishlist-btn.active {
-  @apply text-yellow-400 bg-dark-700/90;
+  @apply text-yellow-400;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px) saturate(200%);
+  -webkit-backdrop-filter: blur(10px) saturate(200%);
+  border-color: rgba(255, 193, 7, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
 }
 .wishlist-btn.disabled {
   @apply text-gray-500 cursor-not-allowed opacity-60;

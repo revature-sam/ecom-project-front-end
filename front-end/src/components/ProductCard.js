@@ -49,7 +49,6 @@ export default function ProductCard({ product, onAdd, onToggleWishlist, isInWish
                 : 'Add to wishlist'
           }
         >
-          ★
         </button>
         {!imageError ? (
           <img 
