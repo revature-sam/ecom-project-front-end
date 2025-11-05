@@ -177,7 +177,9 @@ class ApiService {
 
   async logout() {
     try {
-      await this.request('/users/logout');
+      await this.request('/users/logout', {
+        method: 'POST'
+      });
     } finally {
       localStorage.removeItem('currentUser');
       environment.log('User logged out');

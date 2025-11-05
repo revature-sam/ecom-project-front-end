@@ -43,6 +43,30 @@
   @apply text-center mb-6;
 }
 
+.catalog-header h1 {
+  animation: fadeInUp 1s ease-out;
+  transition: transform 0.3s ease;
+}
+
+.catalog-header h1:hover {
+  transform: translateY(-2px);
+}
+
+.catalog-header .lead {
+  animation: fadeInUp 1s ease-out 0.3s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .lead { 
   @apply text-gray-400;
 }

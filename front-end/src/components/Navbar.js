@@ -102,7 +102,12 @@ export default function Navbar({
   return (
     <nav className="navbar">
       <button className="brand" onClick={handleBrandClick}>
-        E-commerce
+        <span className="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+          </svg>
+        </span>
+        ByteMart
       </button>
       {isHomePage ? (
         <div className="search-center" ref={containerRef}>

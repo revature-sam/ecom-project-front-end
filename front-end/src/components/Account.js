@@ -163,17 +163,6 @@ export default function Account({ user, onLogout, wishlist, onToggleWishlist, on
                   <label>Email</label>
                   <span>{user.email || 'Not provided'}</span>
                 </div>
-                <div className="info-item">
-                  <label>Member Since</label>
-                  <span>
-                    {user.createdAt 
-                      ? new Date(user.createdAt).toLocaleDateString()
-                      : user.id
-                      ? new Date(user.id).toLocaleDateString()
-                      : 'Unknown'
-                    }
-                  </span>
-                </div>
               </div>
             </div>
 

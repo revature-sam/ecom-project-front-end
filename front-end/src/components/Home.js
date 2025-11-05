@@ -22,7 +22,7 @@ export default function Home({
     return (
       <main className="catalog">
         <header className="catalog-header">
-          <h1>E-commerce App</h1>
+          <h1>Welcome to ByteMart</h1>
           <p className="lead">Loading products...</p>
         </header>
         <div className="catalog-content">
@@ -54,8 +54,8 @@ export default function Home({
   return (
     <main className="catalog">
       <header className="catalog-header">
-        <h1>E-commerce App</h1>
-        <p className="lead">Browse placeholder items and add them to your cart.</p>
+        <h1>Welcome to ByteMart</h1>
+        <p className="lead">Browse tech items and add them to your cart.</p>
       </header>
 
       <div className="catalog-content">
