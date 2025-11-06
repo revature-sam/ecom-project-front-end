@@ -438,20 +438,22 @@ function AppContent() {
     }
     
     try {
-      // Set user immediately
-      setUser(userData);
-      localStorage.setItem('currentUser', JSON.stringify(userData));
-      console.log('✅ User stored successfully:', userData);
-
       // If we successfully logged in a user (especially from registration), 
-      // the backend must be available
+      // the backend must be available - set this FIRST
+      const isBackendWorking = true; // We know backend is working if we're here
       if (!backendAvailable) {
         setBackendAvailable(true);
         console.log('✅ Backend availability updated after successful login/registration');
       }
 
+      // Set user immediately
+      setUser(userData);
+      localStorage.setItem('currentUser', JSON.stringify(userData));
+      console.log('✅ User stored successfully:', userData);
+
       // Try to load additional data, but don't let it break the login
-      if (backendAvailable) {
+      // Use local isBackendWorking flag instead of state variable
+      if (isBackendWorking || backendAvailable) {
         // Load cart and wishlist in background - don't wait or fail on errors
         setTimeout(async () => {
           try {
@@ -650,6 +652,8 @@ function AppContent() {
               <Checkout
                 cart={cart}
                 onUpdateCart={setCart}
+                onChangeQuantity={handleChangeQuantity}
+                onRemoveItem={handleRemove}
                 onPlaceOrder={handlePlaceOrder}
                 showNotification={showNotification}
                 currentUser={user}

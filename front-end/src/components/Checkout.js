@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './checkout.css';
 import apiService from '../services/apiService';
 
-export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotification, currentUser, isAppLoading }) {
+export default function Checkout({ cart, onUpdateCart, onChangeQuantity, onRemoveItem, onPlaceOrder, showNotification, currentUser, isAppLoading }) {
   const navigate = useNavigate();
   const [discountCode, setDiscountCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(null);
@@ -206,18 +206,42 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
     }
   }
 
-  function handleQuantityChange(itemId, newQuantity) {
-    if (newQuantity <= 0) {
-      onUpdateCart(cart.filter(item => item.id !== itemId));
+  async function handleQuantityChange(itemId, newQuantity) {
+    if (onChangeQuantity) {
+      // Use the proper backend-synced quantity change function
+      await onChangeQuantity(itemId, newQuantity);
+      // The checkout summary will be recalculated via useEffect when cart updates
     } else {
-      onUpdateCart(cart.map(item => 
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      ));
+      // Fallback to direct cart update (legacy behavior)
+      if (newQuantity <= 0) {
+        onUpdateCart(cart.filter(item => item.id !== itemId));
+      } else {
+        onUpdateCart(cart.map(item => 
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        ));
+      }
+      
+      // Recalculate checkout summary after cart change
+      setTimeout(() => {
+        loadCheckoutSummary();
+      }, 50);
     }
   }
 
-  function handleRemoveItem(itemId) {
-    onUpdateCart(cart.filter(item => item.id !== itemId));
+  async function handleRemoveItem(itemId) {
+    if (onRemoveItem) {
+      // Use the proper backend-synced remove function
+      await onRemoveItem(itemId);
+      // The checkout summary will be recalculated via useEffect when cart updates
+    } else {
+      // Fallback to direct cart update (legacy behavior)
+      onUpdateCart(cart.filter(item => item.id !== itemId));
+      
+      // Recalculate checkout summary after cart change
+      setTimeout(() => {
+        loadCheckoutSummary();
+      }, 50);
+    }
   }
 
   async function handlePlaceOrder() {
