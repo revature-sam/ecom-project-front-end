@@ -443,6 +443,13 @@ function AppContent() {
       localStorage.setItem('currentUser', JSON.stringify(userData));
       console.log('✅ User stored successfully:', userData);
 
+      // If we successfully logged in a user (especially from registration), 
+      // the backend must be available
+      if (!backendAvailable) {
+        setBackendAvailable(true);
+        console.log('✅ Backend availability updated after successful login/registration');
+      }
+
       // Try to load additional data, but don't let it break the login
       if (backendAvailable) {
         // Load cart and wishlist in background - don't wait or fail on errors
@@ -646,6 +653,7 @@ function AppContent() {
                 onPlaceOrder={handlePlaceOrder}
                 showNotification={showNotification}
                 currentUser={user}
+                isAppLoading={loading}
               />
             } 
           />

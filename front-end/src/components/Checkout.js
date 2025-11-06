@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './checkout.css';
 import apiService from '../services/apiService';
 
-export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotification, currentUser }) {
+export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotification, currentUser, isAppLoading }) {
   const navigate = useNavigate();
   const [discountCode, setDiscountCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(null);
@@ -44,8 +44,13 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
     return 'anonymous';
   }
 
-  // Check if user is authenticated
+  // Check if user is authenticated (only after app has finished loading)
   useEffect(() => {
+    // Wait for app to finish loading before checking authentication
+    if (isAppLoading) {
+      return; // Don't check authentication while app is still loading
+    }
+    
     if (!currentUser) {
       navigate('/login');
       return;
@@ -53,7 +58,7 @@ export default function Checkout({ cart, onUpdateCart, onPlaceOrder, showNotific
     
     loadAvailableDiscounts();
     loadCheckoutSummary();
-  }, [currentUser, cart,]);
+  }, [currentUser, cart, isAppLoading]);
 
   async function loadAvailableDiscounts() {
     try {
