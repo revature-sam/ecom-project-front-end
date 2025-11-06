@@ -68,9 +68,17 @@ export default function Login({ onLogin }) {
       if (isRegister) {
         try {
           // Spring backend expects username, password, email
-          userData = await apiService.register(formData.username, formData.password, formData.email);
+          const registrationResponse = await apiService.register(formData.username, formData.password, formData.email);
           
-          if (userData) {
+          if (registrationResponse) {
+            // Normalize registration response to match login response structure
+            userData = {
+              id: registrationResponse.userId, // Map userId to id
+              username: registrationResponse.username,
+              email: registrationResponse.email,
+              // Include any other properties that might be expected
+            };
+            console.log('✅ Normalized registration data for App:', userData);
             onLogin(userData);
             navigate('/');
           }

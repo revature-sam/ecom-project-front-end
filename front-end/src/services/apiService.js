@@ -186,8 +186,6 @@ class ApiService {
     });
     
     if (response) {
-      // Store user data after successful registration
-      localStorage.setItem('currentUser', JSON.stringify(response));
       environment.log('User registered successfully:', response.username);
     }
     
