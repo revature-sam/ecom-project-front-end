@@ -285,12 +285,6 @@ export default function Login({ onLogin }) {
               </button>
             </p>
           </div>
-
-          <div className="demo-info">
-            <h3>Demo Account</h3>
-            <p>Email: demo@example.com</p>
-            <p>Password: demo123</p>
-          </div>
         </div>
       </div>
     </div>
