@@ -1,4 +1,4 @@
-# 🛒 E-Commerce Frontend Application
+# 🛒 ByteMart - Frontend
 
 A modern, responsive e-commerce web application built with React.js and integrated with a Spring Boot backend. This project provides a complete shopping experience with user authentication, product browsing, cart management, wishlist functionality, and order processing.
 
