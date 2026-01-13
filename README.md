@@ -2,7 +2,7 @@
 
 A modern, responsive e-commerce web application built with React.js and integrated with a Spring Boot backend. This project provides a complete shopping experience with user authentication, product browsing, cart management, wishlist functionality, and order processing.
 
-Link (not working): http://trng2309-1.s3-website.us-east-2.amazonaws.com/ 
+Link (currently down): http://trng2309-1.s3-website.us-east-2.amazonaws.com/ 
 
 ## 👥 Team Members
 - **Sam Gupta** - Full Stack Developer
